@@ -1,4 +1,5 @@
 .gradle
+.passkey
 .idea/
 build/
 !gradle/wrapper/gradle-wrapper.jar
