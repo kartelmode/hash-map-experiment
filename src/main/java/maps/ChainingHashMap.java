@@ -24,11 +24,9 @@ public class ChainingHashMap {
 
     private long collisions = 0;
 
-    private final FixedSizeQueue<DataWrapper> inactiveDataQueue; // contains most recent inactive orders
+    private final FixedSizeQueue<DataWrapper> inactiveDataQueue;
 
-    private final ObjectPool<DataWrapper> objectPool;
-
-    ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, ObjectPool<DataWrapper> objectPool, HashCodeComputer hashCodeComputer) {
+    ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         if (initialActiveDataCount < MIN_CAPACITY)
             initialActiveDataCount = MIN_CAPACITY;
 
@@ -38,12 +36,7 @@ public class ChainingHashMap {
 
         allocTable(initialActiveDataCount);
         this.inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
-        this.objectPool = objectPool;
         this.hashCodeComputer = hashCodeComputer;
-    }
-
-    private void onEntryDeleted(DataWrapper orderEntry) {
-        objectPool.release(orderEntry);
     }
 
     private void allocTable (int cap) {
@@ -146,29 +139,6 @@ public class ChainingHashMap {
         return true;
     }
 
-    private boolean putInCache(DataWrapper entry) {
-        AsciiString key = entry.getAsciiString();
-        int         hidx = hashIndex (key);
-        int         idx = find (hidx, key);
-
-        if (idx != NULL) {
-            entries[idx] = entry;
-            entry.setInCachePosition(idx);
-            return false;
-        }
-
-        if (freeHead == NULL) {
-            resizeTable (entries.length * 2);
-            hidx = hashIndex (key); // recompute!
-        }
-
-        idx = allocEntry(hidx);
-
-        putEntry(idx, entry);
-
-        return true;
-    }
-
     private void putNewNoSpaceCheck(DataWrapper entry) {
         AsciiString key = entry.getAsciiString();
         int hidx = hashIndex(key);
@@ -230,7 +200,6 @@ public class ChainingHashMap {
         if (inactiveDataQueue.isFull()) {
             DataWrapper oldEntry = inactiveDataQueue.take();
             free(oldEntry.getInCachePosition());
-            onEntryDeleted(oldEntry);
         }
     }
 

@@ -8,12 +8,12 @@ import internal.ObjectPool;
 public class RobinHoodHashMap extends LinearProbingHashMap {
     private int[] probeSeqLength;
 
-    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, ObjectPool<DataWrapper> objectPool, HashCodeComputer hashCodeComputer) {
-        super(activeDataCount, maxInactiveDataCount, objectPool, hashCodeComputer);
+    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
+        super(activeDataCount, maxInactiveDataCount, hashCodeComputer);
     }
 
-    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, ObjectPool<DataWrapper> objectPool, HashCodeComputer hashCodeComputer, int loadFactor) {
-        super(activeDataCount, maxInactiveDataCount, objectPool, hashCodeComputer, loadFactor);
+    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
+        super(activeDataCount, maxInactiveDataCount, hashCodeComputer, loadFactor);
     }
 
     @Override

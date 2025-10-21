@@ -6,6 +6,8 @@ import internal.DataWrapper;
 import internal.FixedSizeQueue;
 import internal.ObjectPool;
 
+import java.awt.*;
+
 public class LinearProbingHashMap {
     public static final int MIN_CAPACITY = 16;
     public static final int DEFAULT_LOAD_FACTOR = 50;
@@ -20,13 +22,12 @@ public class LinearProbingHashMap {
     protected int lengthMask;
 
     protected final FixedSizeQueue<DataWrapper> inactiveDataQueue; // contains most recent inactive orders
-    protected final ObjectPool<DataWrapper> objectPool;
 
-    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, ObjectPool<DataWrapper> objectPool, HashCodeComputer hashCodeComputer) {
-        this(activeDataCount, maxInactiveDataCount, objectPool, hashCodeComputer, DEFAULT_LOAD_FACTOR);
+    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
+        this(activeDataCount, maxInactiveDataCount, hashCodeComputer, DEFAULT_LOAD_FACTOR);
     }
 
-    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, ObjectPool<DataWrapper> objectPool, HashCodeComputer hashCodeComputer, int loadFactor) {
+    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
         if (activeDataCount < MIN_CAPACITY)
             activeDataCount = MIN_CAPACITY;
 
@@ -49,12 +50,7 @@ public class LinearProbingHashMap {
 
         allocTable(totalCacheSize);
         inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
-        this.objectPool = objectPool;
         this.hashCodeComputer = hashCodeComputer;
-    }
-
-    private void onEntryDeleted(DataWrapper data) {
-        objectPool.release(data);
     }
 
     protected void allocTable(int cap) {
@@ -92,6 +88,7 @@ public class LinearProbingHashMap {
 
     protected void free(int idx) {
         count--;
+        assert !entries[idx].isActive();
         entries[idx].setInCachePosition(-1);
         entries[idx] = null;
 
@@ -153,7 +150,6 @@ public class LinearProbingHashMap {
     }
 
     boolean put(DataWrapper entry) {
-        final AsciiString orderId = entry.getAsciiString();
         if (!entry.isActive()) {
             int hidx = hashIndex(entry.getAsciiString());
             int idx = find(hidx, entry.getAsciiString());
@@ -197,7 +193,6 @@ public class LinearProbingHashMap {
         if (inactiveDataQueue.isFull()) {
             DataWrapper oldestEntry = inactiveDataQueue.take();
             free(oldestEntry.getInCachePosition());
-            onEntryDeleted(oldestEntry);
         }
     }
 

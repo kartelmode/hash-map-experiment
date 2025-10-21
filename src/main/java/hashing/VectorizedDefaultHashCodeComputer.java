@@ -1,17 +1,14 @@
 package hashing;
 
-import jdk.incubator.vector.ByteVector;
-import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.*;
 import sun.misc.Unsafe;
-import jdk.incubator.vector.IntVector;
-
-import java.nio.ByteBuffer;
 
 import static jdk.incubator.vector.VectorOperators.ADD;
 
 public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
     public static VectorizedDefaultHashCodeComputer INSTANCE = new VectorizedDefaultHashCodeComputer();
-    private static final VectorSpecies<Byte> I256 = ByteVector.SPECIES_256;
+    private static final VectorSpecies<Byte> BYTE_SPECIES = ByteVector.SPECIES_256;
+    private static final VectorSpecies<Integer> INT_SPECIES = IntVector.SPECIES_256;
 
     private static final int[] POWERS_OF_31_BACKWARDS = new int[33];
     static {
@@ -26,15 +23,26 @@ public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
 
     @Override
     protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
-//        var next = ByteVector.broadcast(I256, POWERS_OF_31_BACKWARDS[33 - 9]);
-////        var coefficients = ByteVector.fromArray(I256, POWERS_OF_31_BACKWARDS, 33 - 8);
-//        var acc = ByteVector.zero(I256);
-//        for (int i = (int) length; i - I256.length() >= 0; i -= I256.length()) {
-//            acc = acc.add(coefficients.mul(ByteVector.fromArray(I256, input, (int)off + i - I256.length())));
-//            coefficients = coefficients.mul(next);
-//        }
-//        return acc.reduceLanes(ADD) + coefficients.lane(7);
-        return 0;
+        IntVector next = IntVector.broadcast(INT_SPECIES, POWERS_OF_31_BACKWARDS[33 - 9]);
+        var coefficients = IntVector.fromArray(INT_SPECIES, POWERS_OF_31_BACKWARDS, 33 - 8);
+        IntVector acc = IntVector.zero(INT_SPECIES);
+        int i;
+        for (i = (int)length; i - INT_SPECIES.length() >= 0; i -= INT_SPECIES.length()) {
+            VectorMask<Byte> mask = BYTE_SPECIES.indexInRange(0, INT_SPECIES.length());
+            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, (int)off + i - INT_SPECIES.length(), mask);
+            IntVector iValues = (IntVector) values.convertShape(VectorOperators.B2I, INT_SPECIES, 0);
+            acc = acc.add(coefficients.mul(iValues));
+            coefficients = coefficients.mul(next);
+        }
+        if (i > 0) {
+            VectorMask<Byte> mask = BYTE_SPECIES.indexInRange(0, length);
+            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, (int)off, mask);
+            IntVector iValues = (IntVector) values.convertShape(VectorOperators.B2I, INT_SPECIES, 0);
+            acc = acc.add(coefficients.mul(iValues));
+            coefficients = coefficients.mul(next);
+        }
+
+        return acc.reduceLanes(ADD) + coefficients.lane(7);
     }
 
     @Override

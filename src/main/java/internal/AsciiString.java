@@ -57,7 +57,7 @@ public class AsciiString {
         }
 
         int i = 0;
-        while (i + 8 < length) {
+        while (i + 8 <= length) {
             long fstLong = UNSAFE.getLong(array, address + i);
             long sndLong = UNSAFE.getLong(other.array, other.address + i);
 
@@ -67,7 +67,7 @@ public class AsciiString {
             i += 8;
         }
 
-        if (i + 4 < length) {
+        if (i + 4 <= length) {
             int fstInt = UNSAFE.getInt(array, address + i);
             int sndInt = UNSAFE.getInt(other.array, other.address + i);
 
@@ -77,7 +77,7 @@ public class AsciiString {
             i += 4;
         }
 
-        if (i + 2 < length) {
+        if (i + 2 <= length) {
             int fstShort = UNSAFE.getShort(array, address + i);
             int sndShort = UNSAFE.getShort(other.array, other.address + i);
 
@@ -86,6 +86,15 @@ public class AsciiString {
             }
             i += 2;
         }
-        return UNSAFE.getByte(array, address + i) == UNSAFE.getByte(other.array, other.address + i);
+        return i == length || UNSAFE.getByte(array, address + i) == UNSAFE.getByte(other.array, other.address + i);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append((char)array[i]);
+        }
+        return sb.toString();
     }
 }

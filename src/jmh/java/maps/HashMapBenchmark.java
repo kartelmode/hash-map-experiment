@@ -25,22 +25,21 @@ public class HashMapBenchmark {
 
     //    @Param({"128", "4096", "8192"})
     @Param({"4096"})
-    protected int maxInactiveOrdersPerSource;
+    protected int maxInactiveData;
 
     //    @Param({"4096", "16384", "1048576", "2097152"}) //NB: higher counts may not have time to fully fill during short test run time
     @Param({"1048576"})
     protected int activeDataTotal; // must be power of 2
 
-    @Param({"xxHash", "default", "unrolledDefault", "nativeHash"})
-    protected String orderIdHashingStrategy;
+//    @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
+    protected String keyHashingStrategy = "vectorizedDefaultHash";
 
-//    @Param({"75", "50", "40", "25", "10"})
+    @Param({"75", "50", "40", "25", "10"})
     protected int loadFactor;
 
     protected KeyNamingStrategy keyNamingStrategy;
 
     protected final AsciiString keyString = new AsciiString();
-    protected final AsciiString deactivateKeyString = new AsciiString();
     protected long nextKeyId;
 
     protected DataWrapper data;
@@ -48,18 +47,30 @@ public class HashMapBenchmark {
 
     protected ChainingHashMap map;
 
-    private ObjectPool<DataWrapper> pool;
-
     private final Deque<DataWrapper> activeData = new ArrayDeque<>();
+    private DataWrapper[] pool;
+    private long firstInactiveData;
 
     @Setup
     public void init() {
-        pool = new ObjectPool<>(16 * 1024, DataWrapper::new);
         keyNamingStrategy = new KeyNamingStrategy(1);
 
         nextKeyId = BASE_KEY_ID;
-        map = new ChainingHashMap(16 * 1024, maxInactiveOrdersPerSource, pool, selectAsciiHashCodeComputer(orderIdHashingStrategy));
+        map = new ChainingHashMap(16 * 1024, maxInactiveData, selectAsciiHashCodeComputer(keyHashingStrategy));
+        initData();
         simulateActiveData();
+    }
+
+    private void initData() {
+        pool = new DataWrapper[activeDataTotal + maxInactiveData + 1];
+        for (int i = 0; i < activeDataTotal + maxInactiveData + 1; i++) {
+            pool[i] = new DataWrapper();
+        }
+        firstInactiveData = 0;
+    }
+
+    private DataWrapper getDataWrapper() {
+        return pool[(int)((firstInactiveData++) % pool.length)];
     }
 
     @Setup(Level.Invocation)
@@ -68,10 +79,7 @@ public class HashMapBenchmark {
 
         keyNamingStrategy.formatKey(nextKeyId, keyString);
 
-        final long cancelKeyId = nextKeyId - activeDataTotal; // cancel the oldest active order
-        keyNamingStrategy.formatKey(cancelKeyId, deactivateKeyString);
-
-        data = pool.borrow();
+        data = getDataWrapper();
         data.setActive(true);
         data.setAsciiString(keyString);
         data.setInCachePosition(-1);
@@ -86,7 +94,7 @@ public class HashMapBenchmark {
         for (int i = 0; i < activeDataTotal; i++) {
             nextKeyId++;
             keyNamingStrategy.formatKey(nextKeyId, keyString);
-            data = pool.borrow();
+            data = getDataWrapper();
             data.setActive(true);
             data.setAsciiString(keyString);
             data.setInCachePosition(-1);
@@ -108,6 +116,7 @@ public class HashMapBenchmark {
             case "metroHash" -> MetroHashCodeComputer.INSTANCE;
             case "unrolledDefault" -> UnrolledDefaultHashCodeComputer.INSTANCE;
             case "nativeHash" -> NativeHashCodeComputer.INSTANCE;
+            case "vectorizedDefaultHash" -> VectorizedDefaultHashCodeComputer.INSTANCE;
             default -> throw new IllegalArgumentException(hashingStrategyName);
         };
     }
@@ -128,14 +137,15 @@ public class HashMapBenchmark {
         hashes.add("default");
         hashes.add("metroHash");
         hashes.add("unrolledDefault");
+        hashes.add("vectorizedDefaultHash");
         hashes.add("nativeHash");
 
         for (String hash : hashes) {
             HashMapBenchmark bench = new HashMapBenchmark();
             bench.loadFactor = 50;
-            bench.maxInactiveOrdersPerSource = 4096;
+            bench.maxInactiveData = 4096;
             bench.activeDataTotal = (1 << 20);
-            bench.orderIdHashingStrategy = hash;
+            bench.keyHashingStrategy = hash;
             bench.init();
 
             for (int i = 0; i < (1 << 25); i++) {
@@ -155,8 +165,7 @@ public class HashMapBenchmark {
             this.sourceCount = sourceCount;
             this.sourcesOrderIdPrefix = new String[sourceCount];
             for (int i = 0; i < sourceCount; i++) {
-                long sourceId = MAGIC_CONSTANT;
-                this.sourcesOrderIdPrefix[i] = Long.toString(sourceId, 32) + ':';
+                this.sourcesOrderIdPrefix[i] = Long.toString(MAGIC_CONSTANT, 32) + ':';
             }
         }
 
