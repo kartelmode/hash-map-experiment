@@ -16,7 +16,7 @@ public class XxHashCodeComputer extends HashCodeComputer {
     private static final long P5 = 2870177450012600261L;
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         long hash;
         long remaining = length;
 

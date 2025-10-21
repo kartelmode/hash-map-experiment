@@ -9,7 +9,7 @@ public class DefaultHashCodeComputer extends HashCodeComputer {
     }
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         int hash = 0;
         for (int i = 0; i < length; i++) {
             hash = 31 * hash + unsafeAccess.getByte(input, address + off + i);

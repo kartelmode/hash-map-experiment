@@ -4,9 +4,6 @@ import hashing.HashCodeComputer;
 import internal.AsciiString;
 import internal.DataWrapper;
 import internal.FixedSizeQueue;
-import internal.ObjectPool;
-
-import java.awt.*;
 
 public class LinearProbingHashMap {
     public static final int MIN_CAPACITY = 16;
@@ -205,5 +202,9 @@ public class LinearProbingHashMap {
 
     public long getCollisions() {
         return collisions;
+    }
+
+    public int getCapacity() {
+        return entries.length;
     }
 }

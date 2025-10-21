@@ -9,7 +9,7 @@ public class FasterHashCodeComputer extends HashCodeComputer {
     }
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         int hash = 0, i;
         for (i = 0; i + 4 < length; i += 4) {
             hash = 71 * hash + unsafeAccess.getInt(input, address + off + i);

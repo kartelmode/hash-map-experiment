@@ -15,7 +15,7 @@ public class MetroHashCodeComputer extends HashCodeComputer {
     private static final long k3 = 0x30BC5B29L;
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         long remaining = length;
 
         long h = k2 * k0;

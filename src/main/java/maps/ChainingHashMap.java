@@ -4,7 +4,6 @@ import hashing.HashCodeComputer;
 import internal.AsciiString;
 import internal.DataWrapper;
 import internal.FixedSizeQueue;
-import internal.ObjectPool;
 
 import java.util.Arrays;
 
@@ -252,5 +251,9 @@ public class ChainingHashMap {
 
     public long getCollisions() {
         return collisions;
+    }
+
+    public int getCapacity() {
+        return entries.length;
     }
 }

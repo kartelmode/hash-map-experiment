@@ -9,7 +9,7 @@ public class UnrolledDefaultHashCodeComputer extends HashCodeComputer {
     }
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         int hash = 0;
         int i = 0;
         for (i = 0; i + 4 < length; i += 4) {

@@ -3,7 +3,6 @@ package maps;
 import hashing.*;
 import internal.AsciiString;
 import internal.DataWrapper;
-import internal.ObjectPool;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.RunnerException;
 
@@ -114,6 +113,9 @@ public class HashMapBenchmark {
             case "xxHash" -> XxHashCodeComputer.INSTANCE;
             case "default" -> DefaultHashCodeComputer.INSTANCE;
             case "metroHash" -> MetroHashCodeComputer.INSTANCE;
+            case "faster" -> FasterHashCodeComputer.INSTANCE;
+            case "vhFaster" -> vhFasterHashCodeComputer.INSTANCE;
+            case "varHandle" -> vhHashCodeComputer.INSTANCE;
             case "unrolledDefault" -> UnrolledDefaultHashCodeComputer.INSTANCE;
             case "nativeHash" -> NativeHashCodeComputer.INSTANCE;
             case "vectorizedDefaultHash" -> VectorizedDefaultHashCodeComputer.INSTANCE;
@@ -133,12 +135,15 @@ public class HashMapBenchmark {
     private static void runCountingCollisions() {
 
         ArrayList<String> hashes = new ArrayList<>();
+        hashes.add("varHandle");
         hashes.add("xxHash");
         hashes.add("default");
         hashes.add("metroHash");
         hashes.add("unrolledDefault");
         hashes.add("vectorizedDefaultHash");
         hashes.add("nativeHash");
+        hashes.add("faster");
+        hashes.add("vhFaster");
 
         for (String hash : hashes) {
             HashMapBenchmark bench = new HashMapBenchmark();

@@ -22,7 +22,7 @@ public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
     }
 
     @Override
-    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, long off, long length) {
+    protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         IntVector next = IntVector.broadcast(INT_SPECIES, POWERS_OF_31_BACKWARDS[33 - 9]);
         var coefficients = IntVector.fromArray(INT_SPECIES, POWERS_OF_31_BACKWARDS, 33 - 8);
         IntVector acc = IntVector.zero(INT_SPECIES);

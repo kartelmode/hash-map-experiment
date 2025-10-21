@@ -14,7 +14,7 @@ public abstract class HashCodeComputer {
         return hashCode(key.getArray(), UNSAFE, key.getAddress(), 0, key.getLength());
     }
 
-    protected abstract int hashCode(byte[] array, Unsafe unsafeAccess, long address, long offset, long length);
+    protected abstract int hashCode(byte[] array, Unsafe unsafeAccess, long address, int offset, int length);
 
     protected abstract int hashCode(long key);
 

@@ -3,7 +3,6 @@ package maps;
 import hashing.HashCodeComputer;
 import internal.AsciiString;
 import internal.DataWrapper;
-import internal.ObjectPool;
 
 public class RobinHoodHashMap extends LinearProbingHashMap {
     private int[] probeSeqLength;
