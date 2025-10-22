@@ -1,7 +1,10 @@
 plugins {
     id 'java'
     id 'me.champeau.jmh' version '0.7.3'
+    id 'org.hidetake.ssh' version '2.12.0' apply false
 }
+
+apply plugin: 'org.hidetake.ssh'
 
 group = 'org.example'
 version = '1.0-SNAPSHOT'
@@ -45,4 +48,74 @@ jmh {
             '--add-opens=java.base/java.util.zip=ALL-UNNAMED',
             '--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED'
     ]
+}
+
+tasks.named('jmhJar') {
+    archiveBaseName.set('bench')
+    archiveVersion.set('')            // no version in filename
+}
+
+String awsHost   = findProperty('awsHost')
+String awsKey    = findProperty('awsKey') ?: System.properties['user.home'] + '/.ssh/id_rsa'
+String awsUser   = 'ec2-user'
+String remoteDir = "/home/${awsUser}/jmh"
+String jmhArgs   = findProperty('jmhArgs')
+
+ssh.settings {
+    knownHosts = allowAnyHosts
+}
+
+remotes {
+    aws {
+        host = awsHost
+        user = awsUser
+        identity = file(awsKey)
+        retryCount = 1
+    }
+}
+
+tasks.register('jmhUploadJar') {
+    dependsOn 'jmhJar'
+    doLast {
+        def jar = tasks.named('jmhJar').get().outputs.files.singleFile
+        println("Uploading ${jar} into ${remoteDir}")
+        ssh.run {
+            session(remotes.aws) {
+                execute "mkdir -p ${remoteDir} && rm -f ${remoteDir}/results.json"
+
+                put from: jar, into: "${remoteDir}/bench.jar"
+            }
+        }
+    }
+}
+
+tasks.register('remoteJmh') {
+    group = 'benchmark'
+    description = 'Build JMH jar, upload to AWS, run remotely, and fetch results (single task)'
+    dependsOn 'jmhJar', 'jmhUploadJar'
+
+    doLast {
+        // local paths
+        def jar = tasks.named('jmhJar').get().outputs.files.singleFile
+        def localResult = file("$buildDir/reports/jmh/results.json")
+        localResult.parentFile.mkdirs()
+
+        ssh.run {
+            session(remotes.aws) {
+                // run JMH
+                def cmd = """
+                    set -e
+                    pkill -9 java || true
+                    cd ${remoteDir} && \
+                    java -jar bench.jar -rf json -rff results.json ${jmhArgs}
+                """.stripIndent().trim()
+                execute cmd
+
+                // 4) fetch results
+                get from: "${remoteDir}/results.json", into: localResult
+            }
+        }
+
+        println "JMH results saved to: ${localResult.absolutePath}"
+    }
 }
