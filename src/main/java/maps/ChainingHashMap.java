@@ -2,7 +2,7 @@ package maps;
 
 import hashing.HashCodeComputer;
 import internal.AsciiString;
-import internal.DataWrapper;
+import internal.DataPayload;
 import internal.FixedSizeQueue;
 
 import java.util.Arrays;
@@ -19,11 +19,11 @@ public class ChainingHashMap {
     private int []            next;
     private int []            prev;
 
-    private DataWrapper[] entries;
+    private DataPayload[]     entries;
 
     private long collisions = 0;
 
-    private final FixedSizeQueue<DataWrapper> inactiveDataQueue;
+    private final FixedSizeQueue<DataPayload> inactiveDataQueue;
 
     ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         if (initialActiveDataCount < MIN_CAPACITY)
@@ -39,7 +39,7 @@ public class ChainingHashMap {
     }
 
     private void allocTable (int cap) {
-        entries = new DataWrapper [cap];
+        entries = new DataPayload [cap];
         hashIndex = new int [cap];
         next = new int [cap];
         prev = new int [cap];
@@ -117,8 +117,8 @@ public class ChainingHashMap {
         return (prev[idx] == NULL);
     }
 
-    private boolean putIfEmpty(DataWrapper entry) {
-        AsciiString key = entry.getAsciiString();
+    public boolean putIfEmpty(DataPayload entry) {
+        AsciiString key = entry.getKey();
         int hidx = hashIndex(key);
         int idx = find(hidx, key);
 
@@ -138,8 +138,8 @@ public class ChainingHashMap {
         return true;
     }
 
-    private void putNewNoSpaceCheck(DataWrapper entry) {
-        AsciiString key = entry.getAsciiString();
+    private void putNewNoSpaceCheck(DataPayload entry) {
+        AsciiString key = entry.getKey();
         int hidx = hashIndex(key);
         int idx = find(hidx, key);
 
@@ -155,7 +155,7 @@ public class ChainingHashMap {
 
     private void resizeTable(int newSize) {
         final int curLength = entries.length;
-        final DataWrapper[] saveEntries = entries;
+        final DataPayload[] saveEntries = entries;
         final int[] savePrev = prev;
 
         allocTable(newSize);
@@ -171,9 +171,9 @@ public class ChainingHashMap {
 
     private int find(int hidx, AsciiString key) {
         for (int chain = hashIndex[hidx]; chain != NULL; chain = next[chain]) {
-            assert hashIndex(entries[chain].getAsciiString()) == hidx;
+            assert hashIndex(entries[chain].getKey()) == hidx;
 
-            if (keyEquals(key, entries[chain] == null ? null : entries[chain].getAsciiString()))
+            if (keyEquals(key, entries[chain] == null ? null : entries[chain].getKey()))
                 return chain;
         }
 
@@ -190,60 +190,32 @@ public class ChainingHashMap {
         return hashCodeComputer.modPowerOfTwoHashCode(key, hashIndex.length);
     }
 
-    protected void putEntry(int idx, DataWrapper entry) {
+    private void putEntry(int idx, DataPayload entry) {
         entries[idx] = entry;
         entry.setInCachePosition(idx);
     }
 
     private void displaceOldestInactiveOrderIfQueueFull() {
         if (inactiveDataQueue.isFull()) {
-            DataWrapper oldEntry = inactiveDataQueue.take();
+            DataPayload oldEntry = inactiveDataQueue.take();
             free(oldEntry.getInCachePosition());
         }
     }
 
-    private DataWrapper getEntry(AsciiString key) {
+    private DataPayload getEntry(AsciiString key) {
         int pos = find(key);
 
         return (pos == NULL) ? null : entries[pos];
     }
 
-    /**
-     * @return true if inserted.
-     */
-    boolean put(DataWrapper entry) {
-        if (!entry.isActive()) {
-            //assert ! activeOrdersCache.containsKey(orderId);
-            int hidx = hashIndex(entry.getAsciiString());
-            int idx = find(hidx, entry.getAsciiString());
-
-            if (idx != NULL) {
-                return false;
-            } else {
-                displaceOldestInactiveOrderIfQueueFull();
-                if (count == entries.length) {
-                    resizeTable(entries.length * 2);
-                    hidx = hashIndex(entry.getAsciiString());
-                }
-                idx = allocEntry(hidx);
-                putEntry(idx, entry);
-
-                inactiveDataQueue.put(entry);
-                return true;
-            }
-        } else {
-            return putIfEmpty(entry);
-        }
-    }
-
-    DataWrapper get(AsciiString key) {
-        DataWrapper entry = getEntry(key);
-        assert entry == null || key.equals(entry.getAsciiString());
+    DataPayload get(AsciiString key) {
+        DataPayload entry = getEntry(key);
+        assert entry == null || key.equals(entry.getKey());
         return entry;
     }
 
-    void deactivate(DataWrapper entry) {
-        assert find(entry.getAsciiString()) != NULL;
+    void deactivate(DataPayload entry) {
+        assert find(entry.getKey()) != NULL;
 
         displaceOldestInactiveOrderIfQueueFull();
         inactiveDataQueue.put(entry);
