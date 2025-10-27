@@ -20,9 +20,9 @@ public class NativeHashCodeComputer extends  HashCodeComputer {
         return (int)hash ^ (int)(hash >>> 25);
     }
 
-    @Override
-    protected int hashCode(long key) {
-        long h = (key >>> 32) + (key & 0xFFFFFFFF00000000L) * M2;
-        return (int) h ^ (int) (h >>> 25);
-    }
+//    @Override
+//    protected int hashCode(long key) {
+//        long h = (key >>> 32) + (key & 0xFFFFFFFF00000000L) * M2;
+//        return (int) h ^ (int) (h >>> 25);
+//    }
 }

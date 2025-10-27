@@ -5,6 +5,7 @@ import sun.misc.Unsafe;
 
 import static jdk.incubator.vector.VectorOperators.ADD;
 
+//TODO: Figure out where GC is coming from
 public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
     public static final VectorizedDefaultHashCodeComputer INSTANCE = new VectorizedDefaultHashCodeComputer();
     private static final VectorSpecies<Byte> BYTE_SPECIES = ByteVector.SPECIES_256;
@@ -45,8 +46,8 @@ public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
         return acc.reduceLanes(ADD) + coefficients.lane(7);
     }
 
-    @Override
-    protected int hashCode(long key) {
-        return (int) (key ^ (key >>> 32));
-    }
+//    @Override
+//    protected int hashCode(long key) {
+//        return (int) (key ^ (key >>> 32));
+//    }
 }

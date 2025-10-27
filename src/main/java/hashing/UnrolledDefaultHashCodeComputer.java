@@ -30,9 +30,9 @@ public class UnrolledDefaultHashCodeComputer extends HashCodeComputer {
         }
         return hash;
     }
-
-    @Override
-    protected int hashCode(long key) {
-        return (int) (key ^ (key >>> 32));
-    }
+//
+//    @Override
+//    protected int hashCode(long key) {
+//        return (int) (key ^ (key >>> 32));
+//    }
 }

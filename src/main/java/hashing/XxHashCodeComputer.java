@@ -118,16 +118,16 @@ public class XxHashCodeComputer extends HashCodeComputer {
         return hash;
     }
 
-    @Override
-    public int hashCode(long key) {
-        long hash = 8;
-
-        long k1 = key;
-        k1 *= P2;
-        k1 = Long.rotateLeft(k1, 31);
-        k1 *= P1;
-        hash ^= k1;
-        hash = Long.rotateLeft(hash, 27) * P1 + P4;
-        return Long.hashCode(finalize(hash));
-    }
+//    @Override
+//    public int hashCode(long key) {
+//        long hash = 8;
+//
+//        long k1 = key;
+//        k1 *= P2;
+//        k1 = Long.rotateLeft(k1, 31);
+//        k1 *= P1;
+//        hash ^= k1;
+//        hash = Long.rotateLeft(hash, 27) * P1 + P4;
+//        return Long.hashCode(finalize(hash));
+//    }
 }

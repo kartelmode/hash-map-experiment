@@ -99,12 +99,12 @@ public class MetroHashCodeComputer extends HashCodeComputer {
         h ^= Long.rotateRight(h, 29);
         return h;
     }
-
-    @Override
-    public int hashCode(long key) {
-        long h = key * k3;
-        h ^= Long.rotateRight(h, 55) * k1;
-
-        return Long.hashCode(finalize(h));
-    }
+//
+//    @Override
+//    public int hashCode(long key) {
+//        long h = key * k3;
+//        h ^= Long.rotateRight(h, 55) * k1;
+//
+//        return Long.hashCode(finalize(h));
+//    }
 }
