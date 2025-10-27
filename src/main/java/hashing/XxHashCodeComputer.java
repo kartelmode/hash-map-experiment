@@ -3,7 +3,7 @@ package hashing;
 import sun.misc.Unsafe;
 
 public class XxHashCodeComputer extends HashCodeComputer {
-    public static XxHashCodeComputer INSTANCE = new XxHashCodeComputer();
+    public static final XxHashCodeComputer INSTANCE = new XxHashCodeComputer();
 
     private XxHashCodeComputer() {
     }

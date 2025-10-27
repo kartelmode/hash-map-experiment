@@ -3,7 +3,7 @@ package hashing;
 import sun.misc.Unsafe;
 
 public class FasterHashCodeComputer extends HashCodeComputer {
-    public static FasterHashCodeComputer INSTANCE = new FasterHashCodeComputer();
+    public static final FasterHashCodeComputer INSTANCE = new FasterHashCodeComputer();
 
     private FasterHashCodeComputer() {
     }

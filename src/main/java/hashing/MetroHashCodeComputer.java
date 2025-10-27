@@ -3,7 +3,7 @@ package hashing;
 import sun.misc.Unsafe;
 
 public class MetroHashCodeComputer extends HashCodeComputer {
-    public static MetroHashCodeComputer INSTANCE = new MetroHashCodeComputer();
+    public static final MetroHashCodeComputer INSTANCE = new MetroHashCodeComputer();
 
     private MetroHashCodeComputer() {
     }
