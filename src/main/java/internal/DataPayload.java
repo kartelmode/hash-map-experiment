@@ -21,4 +21,8 @@ public class DataPayload {
         return key;
     }
 
+    @Override
+    public String toString() {
+        return key.toString() + "[" + inCachePosition + ']';
+    }
 }
