@@ -7,7 +7,7 @@ import internal.FixedSizeQueue;
 
 import java.util.Arrays;
 
-public class ChainingHashMap {
+public final class ChainingHashMap implements Cache {
     public static final int MIN_CAPACITY = 16;
 
     private static final int  NULL = Integer.MIN_VALUE;
@@ -89,7 +89,7 @@ public class ChainingHashMap {
         entries[idx] = null;
     }
 
-    protected int allocEntry(int hidx) {
+    private int allocEntry(int hidx) {
         assert freeHead != NULL : "Free list is empty. Cannot expand here.";
         assert isEmpty(freeHead) : "Element [freeHead=" + freeHead + "] is not free";
 
@@ -113,10 +113,11 @@ public class ChainingHashMap {
         return (newChainHeadIdx);
     }
 
-    protected final boolean isEmpty(int idx) {
+    private boolean isEmpty(int idx) {
         return (prev[idx] == NULL);
     }
 
+    @Override
     public boolean putIfEmpty(DataPayload entry) {
         AsciiString key = entry.getKey();
         int hidx = hashIndex(key);
@@ -208,24 +209,33 @@ public class ChainingHashMap {
         return (pos == NULL) ? null : entries[pos];
     }
 
-    DataPayload get(AsciiString key) {
+    @Override
+    public DataPayload get(AsciiString key) {
         DataPayload entry = getEntry(key);
         assert entry == null || key.equals(entry.getKey());
         return entry;
     }
 
-    void deactivate(DataPayload entry) {
+    @Override
+    public void deactivate(DataPayload entry) {
         assert find(entry.getKey()) != NULL;
 
         displaceOldestInactiveOrderIfQueueFull();
         inactiveDataQueue.put(entry);
     }
 
-    public long getCollisions() {
+    @Override
+    public long collisionCount() {
         return collisions;
     }
 
-    public int getCapacity() {
+    @Override
+    public int capacity() {
         return entries.length;
+    }
+
+    @Override
+    public int size() {
+        return count;
     }
 }

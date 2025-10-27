@@ -10,9 +10,13 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-@Fork(value=3, jvmArgs = { "-Xms16G", "-Xmx16G", "-XX:+AlwaysPreTouch" })
+@Fork(value=3, jvmArgs = { "-Xms4G", "-Xmx4G", "-XX:+AlwaysPreTouch" })
 @Warmup(iterations = 2, time = 5)
 @Measurement(iterations = 3, time = 15)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -21,34 +25,38 @@ import java.util.concurrent.TimeUnit;
 @Threads(1)
 public class HashMapBenchmark {
     private static final long BASE_KEY_ID = 1_000_000_000_000L;
-    private static final int KEY_UNIVERSE_SIZE = 10_000_000;
+
+    private static final int KEY_UNIVERSE_SIZE = 2097152;
+    {
+        assert Integer.bitCount(KEY_UNIVERSE_SIZE) == 1;
+    }
+    private static final int KEY_UNIVERSE_MASK = (KEY_UNIVERSE_SIZE - 1);
 
     //    @Param({"128", "4096", "8192"})
     @Param({"4096"})
-    protected int maxInactiveKeys = 4096;
+    private int maxInactiveKeys = 4096;
 
-    //    @Param({"4096", "16384", "1048576", "2097152"}) //NB: higher counts may not have time to fully fill during short test run time
-    @Param({"1048576"})
-    protected int maxActiveKeys = 1048576; // must be power of 2
+    //NB: closely related to KEY_UNIVERSE_SIZE: > maxInactiveKeys + maxActiveKeys
+    private int maxActiveKeys = 1048576; // must be power of 2
 
-//    @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
-    protected String hashStrategy = "xxHash";
+    @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
+    private String hashStrategy = "xxHash";
 
-//    @Param({"75", "50", "40", "25", "10"})
-    protected int loadFactor = 50;
+    @Param({"chaining", "linearprobe", "robinhood"})
+    private String mapClass = "chaining";
+
+    @Param({"number", "mm", "uuid"})
+    private String keyNaming = "number";
 
     private KeyNamingStrategy keyNamingStrategy;
-
+    private Cache map;
     private long nextKeyId;
-
-    private ChainingHashMap map;
-
     private DataPayload[] universe;
 
     @Setup
     public void init() {
-        map = new ChainingHashMap(2*maxActiveKeys, maxInactiveKeys, selectAsciiHashCodeComputer(hashStrategy));
-        keyNamingStrategy = new KeyNamingStrategy();
+        map = selectCache(mapClass);
+        keyNamingStrategy = KeyNamingStrategy.select(keyNaming);
 
         initUniverse();
         prepopulateMap();
@@ -56,14 +64,19 @@ public class HashMapBenchmark {
 
     private void initUniverse() {
         universe = new DataPayload[KEY_UNIVERSE_SIZE];
+
+        //Set<String> uniqueKeys = new HashSet<>(KEY_UNIVERSE_SIZE);
         for (int i = 0; i < KEY_UNIVERSE_SIZE; i++) {
-            universe[i] = new DataPayload(keyNamingStrategy.formatKey(i + BASE_KEY_ID));
+            String key = keyNamingStrategy.formatKey(i + BASE_KEY_ID);
+            //if (!uniqueKeys.add(key))
+            //    throw new IllegalStateException("Duplicate key: " + key);
+            universe[i] = new DataPayload(new AsciiString(key));
         }
     }
 
     private void prepopulateMap() {
         for (int i = 0; i < maxActiveKeys; i++) {
-            int nextActive = (int) (nextKeyId % KEY_UNIVERSE_SIZE);
+            int nextActive = (int) (nextKeyId & KEY_UNIVERSE_MASK);
             boolean isNew = map.putIfEmpty(universe[ nextActive]);
             if (!isNew)
                 throw new IllegalStateException("Duplicate");
@@ -74,31 +87,62 @@ public class HashMapBenchmark {
             addNewest();
             nextKeyId++;
         }
+        if (map.size() != maxActiveKeys + maxInactiveKeys)
+            throw new IllegalStateException("Unexpected map size " + map.size());
+    }
+
+    private void findOldest() {
+        final int oldestActive = (int) ((nextKeyId - maxActiveKeys) & KEY_UNIVERSE_MASK);
+        boolean exist = map.get(universe[oldestActive].getKey()) != null;
+        if (!exist)
+            throw new IllegalStateException("Unknown");
+    }
+
+    private void findExpunged() {
+        final int oldestInactive = (int) ((nextKeyId - maxActiveKeys - maxInactiveKeys - 1) & KEY_UNIVERSE_MASK);
+        AsciiString key = universe[oldestInactive].getKey();
+        boolean exist = map.get(key) != null;
+        if (exist)
+            throw new IllegalStateException("Key persisted: " + key);
     }
 
     private void removeOldest() {
-        final int oldestActive = (int) ((nextKeyId - maxActiveKeys) % KEY_UNIVERSE_SIZE);
+        final int oldestActive = (int) ((nextKeyId - maxActiveKeys) & KEY_UNIVERSE_MASK);
         map.deactivate(universe[oldestActive]);
     }
 
     private void addNewest() {
-        final int nextActive = (int) (nextKeyId % KEY_UNIVERSE_SIZE);
+        final int nextActive = (int) (nextKeyId & KEY_UNIVERSE_MASK);
         boolean isNew = map.putIfEmpty(universe[ nextActive]);
         if (!isNew)
             throw new IllegalStateException("Duplicate");
     }
 
     @Benchmark
-    @OperationsPerInvocation(2)
+    @OperationsPerInvocation(4)
     public void benchmark() {
-        removeOldest();
-        addNewest();
+        findOldest();   // GET
+        findExpunged(); // GET
+        removeOldest(); // REMOVE
+        addNewest();    // PUT
         nextKeyId++;
-
-        //TODO: get()
     }
 
-    private static HashCodeComputer selectAsciiHashCodeComputer(String hashingStrategyName) {
+
+
+    private Cache selectCache(String cacheClass) {
+        final int cacheCapacity = 2*maxActiveKeys;
+        final HashCodeComputer hash = selectAsciiHashCodeComputer(hashStrategy);
+
+        return switch (cacheClass) {
+            case "chaining" -> new ChainingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "linearprobe" -> new LinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "robinhood" -> new RobinHoodHashMap(cacheCapacity, maxInactiveKeys, hash);
+            default -> throw new IllegalArgumentException(cacheClass);
+        };
+    }
+
+    static HashCodeComputer selectAsciiHashCodeComputer(String hashingStrategyName) {
         return switch (hashingStrategyName) {
             case "xxHash" -> XxHashCodeComputer.INSTANCE;
             case "default" -> DefaultHashCodeComputer.INSTANCE;
@@ -114,12 +158,6 @@ public class HashMapBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        runCountingCollisions();
-
-        runJMH();
-    }
-
-    private static void runJMH() throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(HashMapBenchmark.class.getSimpleName())
                 .build();
@@ -127,43 +165,5 @@ public class HashMapBenchmark {
         new Runner(opt).run();
     }
 
-    private static void runCountingCollisions() {
-
-        ArrayList<String> hashes = new ArrayList<>();
-        hashes.add("varHandle");
-        hashes.add("xxHash");
-        hashes.add("default");
-        hashes.add("metroHash");
-        hashes.add("unrolledDefault");
-        hashes.add("vectorizedDefaultHash");
-        hashes.add("nativeHash");
-        hashes.add("faster");
-        hashes.add("vhFaster");
-
-
-        int nameWidth = hashes.stream()
-                .mapToInt(String::length)
-                .max()
-                .orElse(0);
-
-        String resultsFormat = "Collisions count for %-" + nameWidth + "s : %12d%n";
-
-        for (String hash : hashes) {
-            HashMapBenchmark bench = new HashMapBenchmark();
-            bench.hashStrategy = hash;
-            bench.init();
-
-            for (int i = 0; i < (1 << 25); i++) {
-                bench.benchmark();
-            }
-            System.out.printf(resultsFormat, hash, bench.map.getCollisions());
-        }
-    }
-
-    public static final class KeyNamingStrategy {
-
-        public AsciiString formatKey(long sequence) {
-            return new AsciiString(Long.toString(sequence));
-        }
-    }
 }
+

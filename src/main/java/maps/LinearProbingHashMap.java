@@ -5,7 +5,7 @@ import internal.AsciiString;
 import internal.DataPayload;
 import internal.FixedSizeQueue;
 
-public class LinearProbingHashMap {
+public class LinearProbingHashMap implements Cache {
     public static final int MIN_CAPACITY = 16;
     public static final int DEFAULT_LOAD_FACTOR = 50;
     protected final int loadFactor;
@@ -122,7 +122,8 @@ public class LinearProbingHashMap {
         return (hashCodeComputer.modPowerOfTwoHashCode(key, entries.length));
     }
 
-    protected boolean putIfEmpty(DataPayload entry) {
+    @Override
+    public boolean putIfEmpty(DataPayload entry) {
         int hidx = hashIndex(entry.getKey());
         int idx = find(hidx, entry.getKey());
 
@@ -139,14 +140,11 @@ public class LinearProbingHashMap {
         return true;
     }
 
-    protected DataPayload getEntry(AsciiString key) {
+    @Override
+    public DataPayload get(AsciiString key) {
         int pos = find(key);
 
         return (pos == NULL) ? null : entries[pos];
-    }
-
-    DataPayload get(AsciiString orderId) {
-        return getEntry(orderId);
     }
 
     protected void putEntry(DataPayload entry, int hidx) {
@@ -168,18 +166,27 @@ public class LinearProbingHashMap {
         }
     }
 
-    void deactivate(DataPayload entry) {
+    @Override
+    public void deactivate(DataPayload entry) {
         assert find(entry.getKey()) != NULL;
 
         displaceOldestInactiveOrderIfQueueFull();
         inactiveDataQueue.put(entry);
     }
 
-    public long getCollisions() {
+    @Override
+    public long collisionCount() {
         return collisions;
     }
 
-    public int getCapacity() {
+    @Override
+    public int capacity() {
         return entries.length;
     }
+
+    @Override
+    public int size () {
+        return count;
+    }
+
 }

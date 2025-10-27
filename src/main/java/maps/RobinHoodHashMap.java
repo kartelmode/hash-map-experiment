@@ -4,7 +4,7 @@ import hashing.HashCodeComputer;
 import internal.AsciiString;
 import internal.DataPayload;
 
-public class RobinHoodHashMap extends LinearProbingHashMap {
+public final class RobinHoodHashMap extends LinearProbingHashMap {
     private int[] probeSeqLength;
 
     RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
@@ -87,7 +87,7 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
     }
 
     @Override
-    protected boolean putIfEmpty(DataPayload entry) {
+    public boolean putIfEmpty(DataPayload entry) {
         int hidx = hashIndex(entry.getKey());
         int idx = find(hidx, entry.getKey());
 
@@ -103,4 +103,5 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
         putEntry(entry, hidx);
         return true;
     }
+
 }
