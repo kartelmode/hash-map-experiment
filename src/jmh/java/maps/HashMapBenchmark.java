@@ -145,6 +145,14 @@ public class HashMapBenchmark {
         hashes.add("faster");
         hashes.add("vhFaster");
 
+
+        int nameWidth = hashes.stream()
+                .mapToInt(String::length)
+                .max()
+                .orElse(0);
+
+        String resultsFormat = "Collisions count for %-" + nameWidth + "s : %12d%n";
+
         for (String hash : hashes) {
             HashMapBenchmark bench = new HashMapBenchmark();
             bench.loadFactor = 50;
@@ -157,7 +165,7 @@ public class HashMapBenchmark {
                 bench.prepareMessages();
                 bench.newDataPlusDeactivate();
             }
-            System.out.println("Collisions count for " + hash + ": " + bench.map.getCollisions());
+            System.out.printf(resultsFormat, hash, bench.map.getCollisions());
         }
     }
 
