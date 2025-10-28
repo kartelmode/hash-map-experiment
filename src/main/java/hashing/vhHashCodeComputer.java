@@ -33,10 +33,10 @@ public class vhHashCodeComputer extends VarHandleHashCodeComputer {
         return fmix32(h, len);
     }
 
-    @Override
-    protected int hashCode(long key) {
-        return (int) (key ^ (key >>> 32));
-    }
+//    @Override
+//    protected int hashCode(long key) {
+//        return (int) (key ^ (key >>> 32));
+//    }
 
 
     private static int mix32(int x) {

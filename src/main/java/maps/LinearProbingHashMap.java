@@ -2,10 +2,10 @@ package maps;
 
 import hashing.HashCodeComputer;
 import internal.AsciiString;
-import internal.DataWrapper;
+import internal.DataPayload;
 import internal.FixedSizeQueue;
 
-public class LinearProbingHashMap {
+public class LinearProbingHashMap implements Cache {
     public static final int MIN_CAPACITY = 16;
     public static final int DEFAULT_LOAD_FACTOR = 50;
     protected final int loadFactor;
@@ -15,10 +15,10 @@ public class LinearProbingHashMap {
     protected int count = 0;
     protected long collisions = 0;
 
-    protected DataWrapper[] entries;
+    protected DataPayload[] entries;
     protected int lengthMask;
 
-    protected final FixedSizeQueue<DataWrapper> inactiveDataQueue; // contains most recent inactive orders
+    protected final FixedSizeQueue<DataPayload> inactiveDataQueue; // contains most recent inactive orders
 
     LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         this(activeDataCount, maxInactiveDataCount, hashCodeComputer, DEFAULT_LOAD_FACTOR);
@@ -51,13 +51,13 @@ public class LinearProbingHashMap {
     }
 
     protected void allocTable(int cap) {
-        entries = new DataWrapper[cap];
+        entries = new DataPayload[cap];
         lengthMask = cap - 1;
     }
 
     protected void resizeTable(int newSize) {
         final int curLength = entries.length;
-        final DataWrapper[] saveOrders = entries;
+        final DataPayload[] saveOrders = entries;
 
         allocTable(newSize);
         count = 0;
@@ -69,8 +69,8 @@ public class LinearProbingHashMap {
         }
     }
 
-    protected void putNewNoSpaceCheck(DataWrapper entry) {
-        int hidx = hashIndex(entry.getAsciiString());
+    protected void putNewNoSpaceCheck(DataPayload entry) {
+        int hidx = hashIndex(entry.getKey());
 
         putEntry(entry, hidx);
     }
@@ -85,13 +85,12 @@ public class LinearProbingHashMap {
 
     protected void free(int idx) {
         count--;
-        assert !entries[idx].isActive();
         entries[idx].setInCachePosition(-1);
         entries[idx] = null;
 
         for (int hidx = (idx + 1) & lengthMask; isFilled(hidx); hidx = (hidx + 1) & lengthMask) {
-            count--;
-            DataWrapper entry = entries[hidx];
+            count--; // balance out count increment in the following putNewNoSpaceCheck()
+            DataPayload entry = entries[hidx];
             entries[hidx] = null;
             entry.setInCachePosition(-1);
             putNewNoSpaceCheck(entry);
@@ -112,7 +111,7 @@ public class LinearProbingHashMap {
     protected int find(int hidx, AsciiString key) {
         int attempts = 0;
         for (; attempts < entries.length && isFilled(hidx); hidx = (hidx + 1) & lengthMask, attempts++) {
-            if (keyEquals(entries[hidx].getAsciiString(), key)) {
+            if (keyEquals(entries[hidx].getKey(), key)) {
                 return hidx;
             }
         }
@@ -123,9 +122,10 @@ public class LinearProbingHashMap {
         return (hashCodeComputer.modPowerOfTwoHashCode(key, entries.length));
     }
 
-    protected boolean putIfEmpty(DataWrapper entry) {
-        int hidx = hashIndex(entry.getAsciiString());
-        int idx = find(hidx, entry.getAsciiString());
+    @Override
+    public boolean putIfEmpty(DataPayload entry) {
+        int hidx = hashIndex(entry.getKey());
+        int idx = find(hidx, entry.getKey());
 
         if (idx != NULL) {
             return false;
@@ -133,48 +133,21 @@ public class LinearProbingHashMap {
 
         if (count * 100 >= entries.length * loadFactor) {
             resizeTable(entries.length * 2);
-            hidx = hashIndex(entry.getAsciiString());
+            hidx = hashIndex(entry.getKey());
         }
 
         putEntry(entry, hidx);
         return true;
     }
 
-    protected DataWrapper getEntry(AsciiString key) {
+    @Override
+    public DataPayload get(AsciiString key) {
         int pos = find(key);
 
         return (pos == NULL) ? null : entries[pos];
     }
 
-    boolean put(DataWrapper entry) {
-        if (!entry.isActive()) {
-            int hidx = hashIndex(entry.getAsciiString());
-            int idx = find(hidx, entry.getAsciiString());
-
-            if (idx != NULL) {
-                return false;
-            } else {
-                displaceOldestInactiveOrderIfQueueFull();
-                if (count * 100 >= entries.length * loadFactor) {
-                    resizeTable(entries.length * 2);
-                    hidx = hashIndex(entry.getAsciiString());
-                }
-                putEntry(entry, hidx);
-
-                inactiveDataQueue.put(entry);
-                return true;
-            }
-        } else {
-            return putIfEmpty(entry);
-        }
-    }
-
-    DataWrapper get(AsciiString orderId) {
-        DataWrapper entry = getEntry(orderId);
-        return entry;
-    }
-
-    protected void putEntry(DataWrapper entry, int hidx) {
+    protected void putEntry(DataPayload entry, int hidx) {
         int attempts = 0;
         while (attempts < entries.length && isFilled(hidx)) {
             hidx = (hidx + 1) & lengthMask;
@@ -188,23 +161,32 @@ public class LinearProbingHashMap {
 
     protected void displaceOldestInactiveOrderIfQueueFull() {
         if (inactiveDataQueue.isFull()) {
-            DataWrapper oldestEntry = inactiveDataQueue.take();
+            DataPayload oldestEntry = inactiveDataQueue.take();
             free(oldestEntry.getInCachePosition());
         }
     }
 
-    void deactivate(DataWrapper entry) {
-        assert find(entry.getAsciiString()) != NULL;
+    @Override
+    public void deactivate(DataPayload entry) {
+        assert find(entry.getKey()) != NULL;
 
         displaceOldestInactiveOrderIfQueueFull();
         inactiveDataQueue.put(entry);
     }
 
-    public long getCollisions() {
+    @Override
+    public long collisionCount() {
         return collisions;
     }
 
-    public int getCapacity() {
+    @Override
+    public int capacity() {
         return entries.length;
     }
+
+    @Override
+    public int size () {
+        return count;
+    }
+
 }

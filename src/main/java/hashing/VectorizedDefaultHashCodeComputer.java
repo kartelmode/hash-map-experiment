@@ -5,8 +5,9 @@ import sun.misc.Unsafe;
 
 import static jdk.incubator.vector.VectorOperators.ADD;
 
+//TODO: Allocates memory
 public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
-    public static VectorizedDefaultHashCodeComputer INSTANCE = new VectorizedDefaultHashCodeComputer();
+    public static final VectorizedDefaultHashCodeComputer INSTANCE = new VectorizedDefaultHashCodeComputer();
     private static final VectorSpecies<Byte> BYTE_SPECIES = ByteVector.SPECIES_256;
     private static final VectorSpecies<Integer> INT_SPECIES = IntVector.SPECIES_256;
 
@@ -27,16 +28,16 @@ public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
         var coefficients = IntVector.fromArray(INT_SPECIES, POWERS_OF_31_BACKWARDS, 33 - 8);
         IntVector acc = IntVector.zero(INT_SPECIES);
         int i;
-        for (i = (int)length; i - INT_SPECIES.length() >= 0; i -= INT_SPECIES.length()) {
+        for (i = length; i - INT_SPECIES.length() >= 0; i -= INT_SPECIES.length()) {
             VectorMask<Byte> mask = BYTE_SPECIES.indexInRange(0, INT_SPECIES.length());
-            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, (int)off + i - INT_SPECIES.length(), mask);
+            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, off + i - INT_SPECIES.length(), mask);
             IntVector iValues = (IntVector) values.convertShape(VectorOperators.B2I, INT_SPECIES, 0);
             acc = acc.add(coefficients.mul(iValues));
             coefficients = coefficients.mul(next);
         }
         if (i > 0) {
             VectorMask<Byte> mask = BYTE_SPECIES.indexInRange(0, length);
-            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, (int)off, mask);
+            ByteVector values = ByteVector.fromArray(BYTE_SPECIES, input, off, mask);
             IntVector iValues = (IntVector) values.convertShape(VectorOperators.B2I, INT_SPECIES, 0);
             acc = acc.add(coefficients.mul(iValues));
             coefficients = coefficients.mul(next);
@@ -45,8 +46,8 @@ public class VectorizedDefaultHashCodeComputer extends HashCodeComputer {
         return acc.reduceLanes(ADD) + coefficients.lane(7);
     }
 
-    @Override
-    protected int hashCode(long key) {
-        return (int) (key ^ (key >>> 32));
-    }
+//    @Override
+//    protected int hashCode(long key) {
+//        return (int) (key ^ (key >>> 32));
+//    }
 }

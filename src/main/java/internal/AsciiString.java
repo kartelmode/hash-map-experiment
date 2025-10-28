@@ -3,18 +3,18 @@ package internal;
 import static internal.UnsafeAccess.UNSAFE;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
-public class AsciiString {
-    private byte[] array;
-    private int length = 0;
-    protected long address;
-
-    public AsciiString() {
-        this.array = new byte[1];
-        this.length = 0;
-    }
+public final class AsciiString {
+    private final byte[] array;
+    private final int length;
+    private final long address;
 
     public AsciiString(final CharSequence value) {
-        setString(value);
+        array = new byte[value.length()];
+        for (int i = 0; i < value.length(); i++) {
+            array[i] = (byte) value.charAt(i);
+        }
+        length = value.length();
+        address = ARRAY_BYTE_BASE_OFFSET;
     }
 
     public byte[] getArray() {
@@ -27,25 +27,6 @@ public class AsciiString {
 
     public int getLength() {
         return length;
-    }
-
-    public void setString(final CharSequence value) {
-        array = new byte[value.length()];
-        for (int i = 0; i < value.length(); i++) {
-            array[i] = (byte) value.charAt(i);
-        }
-        length = value.length();
-        address = ARRAY_BYTE_BASE_OFFSET;
-    }
-
-    public void copyFrom(final AsciiString value) {
-        if (array.length < value.length) {
-            int newLength = Math.max(array.length << 1, value.length);
-            array = new byte[newLength];
-        }
-        System.arraycopy(value.array, 0, array, 0, value.length);
-        length = value.length;
-        address = ARRAY_BYTE_BASE_OFFSET;
     }
 
     public boolean equals(AsciiString other) {
@@ -91,10 +72,11 @@ public class AsciiString {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            sb.append((char)array[i]);
-        }
-        return sb.toString();
+        return new String(array, 0, length); // ASCII to UTF8
+//        StringBuilder sb = new StringBuilder();
+//        for (int i = 0; i < length; i++) {
+//            sb.append((char)array[i]);
+//        }
+//        return sb.toString();
     }
 }

@@ -16,11 +16,11 @@ public abstract class HashCodeComputer {
 
     protected abstract int hashCode(byte[] array, Unsafe unsafeAccess, long address, int offset, int length);
 
-    protected abstract int hashCode(long key);
+//    protected abstract int hashCode(long key);
 
-    public int modPowerOfTwoHashCode(long key, int mod) {
-        return computeModPowerOfTwoHashCode(hashCode(key), mod);
-    }
+//    public int modPowerOfTwoHashCode(long key, int mod) {
+//        return computeModPowerOfTwoHashCode(hashCode(key), mod);
+//    }
 
     public int modPowerOfTwoHashCode(int key, int mod) {
         return computeModPowerOfTwoHashCode(key, mod);
