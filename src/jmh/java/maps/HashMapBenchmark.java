@@ -65,12 +65,8 @@ public class HashMapBenchmark {
     private void initUniverse() {
         universe = new DataPayload[KEY_UNIVERSE_SIZE];
 
-        //Set<String> uniqueKeys = new HashSet<>(KEY_UNIVERSE_SIZE);
         for (int i = 0; i < KEY_UNIVERSE_SIZE; i++) {
-            String key = keyNamingStrategy.formatKey(i + BASE_KEY_ID);
-            //if (!uniqueKeys.add(key))
-            //    throw new IllegalStateException("Duplicate key: " + key);
-            universe[i] = new DataPayload(new AsciiString(key));
+            universe[i] = new DataPayload(keyNamingStrategy.formatKey(i + BASE_KEY_ID));
         }
     }
 

@@ -1,10 +1,12 @@
 package maps;
 
 
+import internal.AsciiString;
+
 import java.util.Random;
 
 interface KeyNamingStrategy {
-    String formatKey(long sequence);
+    AsciiString formatKey(long sequence);
 
     static KeyNamingStrategy select (String keyNaming) {
         return switch (keyNaming) {
@@ -18,8 +20,8 @@ interface KeyNamingStrategy {
 
 final class NumberKeyNamingStrategy implements KeyNamingStrategy {
     @Override
-    public String formatKey(long sequence) {
-        return Long.toString(sequence);
+    public AsciiString formatKey(long sequence) {
+        return new AsciiString(Long.toString(sequence));
     }
 
 }
@@ -28,10 +30,10 @@ final class MMNamingStrategy implements KeyNamingStrategy {
     private static final String PREFIX = "SOURCE13:";
     private final StringBuilder sb = new StringBuilder().append(PREFIX);
     @Override
-    public String formatKey(long sequence) {
+    public AsciiString formatKey(long sequence) {
         sb.setLength(PREFIX.length());
         sb.append(Long.toString(sequence, 32));
-        return sb.toString();
+        return new AsciiString(sb);
     }
 }
 
@@ -40,7 +42,7 @@ final class UUIDNamingStrategy implements KeyNamingStrategy {
     private final Random rnd = new Random(152);
     private final StringBuilder sb = new StringBuilder();
     @Override
-    public String formatKey(long sequence) {
+    public AsciiString formatKey(long sequence) {
         sb.setLength(0);
         long msb = rnd.nextLong();
         long lsb = rnd.nextLong();
@@ -70,7 +72,7 @@ final class UUIDNamingStrategy implements KeyNamingStrategy {
         for (int i = 11; i >= 0; i -= 1)
             sb.append(HEX_DIGITS_UPPER[(int) (lsb >> (i * 4)) & 0xF]);
 
-        return sb.toString();
+        return new AsciiString(sb);
     }
 
 }
