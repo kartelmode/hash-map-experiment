@@ -89,7 +89,7 @@ public class LinearProbingHashMap implements Cache {
         entries[idx] = null;
 
         for (int hidx = (idx + 1) & lengthMask; isFilled(hidx); hidx = (hidx + 1) & lengthMask) {
-            count--;
+            count--; // balance out count increment in the following putNewNoSpaceCheck()
             DataPayload entry = entries[hidx];
             entries[hidx] = null;
             entry.setInCachePosition(-1);
