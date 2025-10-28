@@ -48,7 +48,7 @@ public class HashMapCollisionsBenchmark {
 
         printMetric(metricsMatrix, "Empty Bucket Ratio (smaller is better)", m->String.format("%.6f", m.emptyRate));
         printMetric(metricsMatrix, "Index of dispersion (≈1 =good, »1 =clustering, «1 = suspicious)", m->String.format("%.6f", m.iod));
-        printMetric(metricsMatrix, "Percentiles {P90,P99,P999}", m->String.format("{%d, %d, %d}", m.p90, m.p99, m.p999));
+        printMetric(metricsMatrix, "Percentiles {P50,P90,P99,P999}", m->String.format("{%d, %d, %d, %d}", m.p50, m.p90, m.p99, m.p999));
     }
 
     private static void printMetric(BasicMetrics[][] metricsMatrix, String metricName, Function<BasicMetrics,String> metricExtractor) {
@@ -100,7 +100,7 @@ public class HashMapCollisionsBenchmark {
         System.out.print(sb);
     }
 
-    public record BasicMetrics(float lambda, float iod, float emptyRate, int p90, int p99, int p999) {}
+    public record BasicMetrics(float lambda, float iod, float emptyRate, int p50, int p90, int p99, int p999) {}
 
     private static BasicMetrics runOnce(String hashStrategy, String keyNaming, int maxActiveKeys) {
         final KeyNamingStrategy keyNamingStrategy = KeyNamingStrategy.select(keyNaming);
@@ -136,11 +136,12 @@ public class HashMapCollisionsBenchmark {
 
         int[] sorted = counts.clone();
         Arrays.sort(sorted);
+        int p50 = sorted[(int)(0.50 * (sorted.length - 1))];
         int p90 = sorted[(int)(0.90 * (sorted.length - 1))];
         int p99 = sorted[(int)(0.99 * (sorted.length - 1))];
         int p999 = sorted[(int)(0.999 * (sorted.length - 1))];
 
-        return new BasicMetrics(lambda, iod, emptyRate, p90, p99, p999);
+        return new BasicMetrics(lambda, iod, emptyRate, p50, p90, p99, p999);
     }
 
     // ----- tiny helpers -----
