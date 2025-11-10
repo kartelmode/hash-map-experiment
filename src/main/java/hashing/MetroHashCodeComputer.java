@@ -3,7 +3,7 @@ package hashing;
 import sun.misc.Unsafe;
 
 public class MetroHashCodeComputer extends HashCodeComputer {
-    public static MetroHashCodeComputer INSTANCE = new MetroHashCodeComputer();
+    public static final MetroHashCodeComputer INSTANCE = new MetroHashCodeComputer();
 
     private MetroHashCodeComputer() {
     }
@@ -99,12 +99,12 @@ public class MetroHashCodeComputer extends HashCodeComputer {
         h ^= Long.rotateRight(h, 29);
         return h;
     }
-
-    @Override
-    public int hashCode(long key) {
-        long h = key * k3;
-        h ^= Long.rotateRight(h, 55) * k1;
-
-        return Long.hashCode(finalize(h));
-    }
+//
+//    @Override
+//    public int hashCode(long key) {
+//        long h = key * k3;
+//        h ^= Long.rotateRight(h, 55) * k1;
+//
+//        return Long.hashCode(finalize(h));
+//    }
 }

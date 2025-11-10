@@ -3,7 +3,7 @@ package hashing;
 import sun.misc.Unsafe;
 
 public class DefaultHashCodeComputer extends HashCodeComputer {
-    public static DefaultHashCodeComputer INSTANCE = new DefaultHashCodeComputer();
+    public static final DefaultHashCodeComputer INSTANCE = new DefaultHashCodeComputer();
 
     private DefaultHashCodeComputer() {
     }
@@ -17,8 +17,8 @@ public class DefaultHashCodeComputer extends HashCodeComputer {
         return hash;
     }
 
-    @Override
-    protected int hashCode(long key) {
-        return (int) (key ^ (key >>> 32));
-    }
+//    @Override
+//    protected int hashCode(long key) {
+//        return (int) (key ^ (key >>> 32));
+//    }
 }

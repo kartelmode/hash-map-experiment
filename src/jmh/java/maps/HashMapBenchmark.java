@@ -2,16 +2,21 @@ package maps;
 
 import hashing.*;
 import internal.AsciiString;
-import internal.DataWrapper;
+import internal.DataPayload;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-@Fork(value=3, jvmArgs = { "-Xms2G", "-Xmx2G", "-XX:+AlwaysPreTouch" })
+@Fork(value=3, jvmArgs = { "-Xms4G", "-Xmx4G", "-XX:+AlwaysPreTouch" })
 @Warmup(iterations = 2, time = 5)
 @Measurement(iterations = 3, time = 15)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -19,96 +24,121 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @Threads(1)
 public class HashMapBenchmark {
-    private static final long MAGIC_CONSTANT = 123456775432L;
-    private static final long BASE_KEY_ID = 1000_000_000_000L;
+    private static final long BASE_KEY_ID = 1_000_000_000_000L;
+
+    private static final int KEY_UNIVERSE_SIZE = 2097152;
+    {
+        assert Integer.bitCount(KEY_UNIVERSE_SIZE) == 1;
+    }
+    private static final int KEY_UNIVERSE_MASK = (KEY_UNIVERSE_SIZE - 1);
 
     //    @Param({"128", "4096", "8192"})
     @Param({"4096"})
-    protected int maxInactiveData;
+    private int maxInactiveKeys = 4096;
 
-    //    @Param({"4096", "16384", "1048576", "2097152"}) //NB: higher counts may not have time to fully fill during short test run time
-    @Param({"1048576"})
-    protected int activeDataTotal; // must be power of 2
+    //NB: closely related to KEY_UNIVERSE_SIZE: > maxInactiveKeys + maxActiveKeys
+    private int maxActiveKeys = 1048576; // must be power of 2
 
-//    @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
-    protected String keyHashingStrategy = "vectorizedDefaultHash";
+    @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
+    private String hashStrategy = "xxHash";
 
-    @Param({"75", "50", "40", "25", "10"})
-    protected int loadFactor;
+    @Param({"chaining", "linearprobe", "robinhood"})
+    private String mapClass = "chaining";
 
-    protected KeyNamingStrategy keyNamingStrategy;
+    @Param({"number", "mm", "uuid"})
+    private String keyNaming = "number";
 
-    protected final AsciiString keyString = new AsciiString();
-    protected long nextKeyId;
-
-    protected DataWrapper data;
-    protected DataWrapper deactivatingData;
-
-    protected ChainingHashMap map;
-
-    private final Deque<DataWrapper> activeData = new ArrayDeque<>();
-    private DataWrapper[] pool;
-    private long firstInactiveData;
+    private KeyNamingStrategy keyNamingStrategy;
+    private Cache map;
+    private long nextKeyId;
+    private DataPayload[] universe;
 
     @Setup
     public void init() {
-        keyNamingStrategy = new KeyNamingStrategy(1);
+        map = selectCache(mapClass);
+        keyNamingStrategy = KeyNamingStrategy.select(keyNaming);
 
-        nextKeyId = BASE_KEY_ID;
-        map = new ChainingHashMap(16 * 1024, maxInactiveData, selectAsciiHashCodeComputer(keyHashingStrategy));
-        initData();
-        simulateActiveData();
+        initUniverse();
+        prepopulateMap();
     }
 
-    private void initData() {
-        pool = new DataWrapper[activeDataTotal + maxInactiveData + 1];
-        for (int i = 0; i < activeDataTotal + maxInactiveData + 1; i++) {
-            pool[i] = new DataWrapper();
+    private void initUniverse() {
+        universe = new DataPayload[KEY_UNIVERSE_SIZE];
+
+        for (int i = 0; i < KEY_UNIVERSE_SIZE; i++) {
+            universe[i] = new DataPayload(keyNamingStrategy.formatKey(i + BASE_KEY_ID));
         }
-        firstInactiveData = 0;
     }
 
-    private DataWrapper getDataWrapper() {
-        return pool[(int)((firstInactiveData++) % pool.length)];
-    }
-
-    @Setup(Level.Invocation)
-    public void prepareMessages() {
-        nextKeyId++;
-
-        keyNamingStrategy.formatKey(nextKeyId, keyString);
-
-        data = getDataWrapper();
-        data.setActive(true);
-        data.setAsciiString(keyString);
-        data.setInCachePosition(-1);
-        activeData.add(data);
-
-        deactivatingData = activeData.getFirst();
-        deactivatingData.setActive(false);
-        activeData.removeFirst();
-    }
-
-    private void simulateActiveData() {
-        for (int i = 0; i < activeDataTotal; i++) {
+    private void prepopulateMap() {
+        for (int i = 0; i < maxActiveKeys; i++) {
+            int nextActive = (int) (nextKeyId & KEY_UNIVERSE_MASK);
+            boolean isNew = map.putIfEmpty(universe[ nextActive]);
+            if (!isNew)
+                throw new IllegalStateException("Duplicate");
             nextKeyId++;
-            keyNamingStrategy.formatKey(nextKeyId, keyString);
-            data = getDataWrapper();
-            data.setActive(true);
-            data.setAsciiString(keyString);
-            data.setInCachePosition(-1);
-            map.put(data);
-            activeData.add(data);
         }
+        for (int i=0; i < maxInactiveKeys; i++) {
+            removeOldest();
+            addNewest();
+            nextKeyId++;
+        }
+        if (map.size() != maxActiveKeys + maxInactiveKeys)
+            throw new IllegalStateException("Unexpected map size " + map.size());
+    }
+
+    private void findOldest() {
+        final int oldestActive = (int) ((nextKeyId - maxActiveKeys) & KEY_UNIVERSE_MASK);
+        boolean exist = map.get(universe[oldestActive].getKey()) != null;
+        if (!exist)
+            throw new IllegalStateException("Unknown");
+    }
+
+    private void findExpunged() {
+        final int oldestInactive = (int) ((nextKeyId - maxActiveKeys - maxInactiveKeys - 1) & KEY_UNIVERSE_MASK);
+        AsciiString key = universe[oldestInactive].getKey();
+        boolean exist = map.get(key) != null;
+        if (exist)
+            throw new IllegalStateException("Key persisted: " + key);
+    }
+
+    private void removeOldest() {
+        final int oldestActive = (int) ((nextKeyId - maxActiveKeys) & KEY_UNIVERSE_MASK);
+        map.deactivate(universe[oldestActive]);
+    }
+
+    private void addNewest() {
+        final int nextActive = (int) (nextKeyId & KEY_UNIVERSE_MASK);
+        boolean isNew = map.putIfEmpty(universe[ nextActive]);
+        if (!isNew)
+            throw new IllegalStateException("Duplicate");
     }
 
     @Benchmark
-    public void newDataPlusDeactivate() {
-        map.deactivate(deactivatingData);
-        map.put(data);
+    @OperationsPerInvocation(4)
+    public void benchmark() {
+        findOldest();   // GET
+        findExpunged(); // GET
+        removeOldest(); // REMOVE
+        addNewest();    // PUT
+        nextKeyId++;
     }
 
-    private static HashCodeComputer selectAsciiHashCodeComputer(String hashingStrategyName) {
+
+
+    private Cache selectCache(String cacheClass) {
+        final int cacheCapacity = 2*maxActiveKeys;
+        final HashCodeComputer hash = selectAsciiHashCodeComputer(hashStrategy);
+
+        return switch (cacheClass) {
+            case "chaining" -> new ChainingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "linearprobe" -> new LinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "robinhood" -> new RobinHoodHashMap(cacheCapacity, maxInactiveKeys, hash);
+            default -> throw new IllegalArgumentException(cacheClass);
+        };
+    }
+
+    static HashCodeComputer selectAsciiHashCodeComputer(String hashingStrategyName) {
         return switch (hashingStrategyName) {
             case "xxHash" -> XxHashCodeComputer.INSTANCE;
             case "default" -> DefaultHashCodeComputer.INSTANCE;
@@ -124,59 +154,12 @@ public class HashMapBenchmark {
     }
 
     public static void main(String[] args) throws RunnerException {
-        runCountingCollisions();
-//        Options opt = new OptionsBuilder()
-//                .include(HashMapBenchmark.class.getSimpleName())
-//                .build();
-//
-//        new Runner(opt).run();
+        Options opt = new OptionsBuilder()
+                .include(HashMapBenchmark.class.getSimpleName())
+                .build();
+
+        new Runner(opt).run();
     }
 
-    private static void runCountingCollisions() {
-
-        ArrayList<String> hashes = new ArrayList<>();
-        hashes.add("varHandle");
-        hashes.add("xxHash");
-        hashes.add("default");
-        hashes.add("metroHash");
-        hashes.add("unrolledDefault");
-        hashes.add("vectorizedDefaultHash");
-        hashes.add("nativeHash");
-        hashes.add("faster");
-        hashes.add("vhFaster");
-
-        for (String hash : hashes) {
-            HashMapBenchmark bench = new HashMapBenchmark();
-            bench.loadFactor = 50;
-            bench.maxInactiveData = 4096;
-            bench.activeDataTotal = (1 << 20);
-            bench.keyHashingStrategy = hash;
-            bench.init();
-
-            for (int i = 0; i < (1 << 25); i++) {
-                bench.prepareMessages();
-                bench.newDataPlusDeactivate();
-            }
-            System.out.println("Collisions count for " + hash + ": " + bench.map.getCollisions());
-        }
-    }
-
-    public static final class KeyNamingStrategy {
-
-        private final int sourceCount;
-        private final String[] sourcesOrderIdPrefix;
-
-        private KeyNamingStrategy(int sourceCount) {
-            this.sourceCount = sourceCount;
-            this.sourcesOrderIdPrefix = new String[sourceCount];
-            for (int i = 0; i < sourceCount; i++) {
-                this.sourcesOrderIdPrefix[i] = Long.toString(MAGIC_CONSTANT, 32) + ':';
-            }
-        }
-
-        public void formatKey(long orderId, AsciiString result) {
-            final int sourceIndex = (int) (orderId % sourceCount);
-            result.setString(sourcesOrderIdPrefix[sourceIndex] + orderId);
-        }
-    }
 }
+

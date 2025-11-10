@@ -2,9 +2,9 @@ package maps;
 
 import hashing.HashCodeComputer;
 import internal.AsciiString;
-import internal.DataWrapper;
+import internal.DataPayload;
 
-public class RobinHoodHashMap extends LinearProbingHashMap {
+public final class RobinHoodHashMap extends LinearProbingHashMap {
     private int[] probeSeqLength;
 
     RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
@@ -22,8 +22,8 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
     }
 
     @Override
-    protected void putNewNoSpaceCheck(DataWrapper entry) {
-        int hidx = hashIndex(entry.getAsciiString());
+    protected void putNewNoSpaceCheck(DataPayload entry) {
+        int hidx = hashIndex(entry.getKey());
         putEntry(entry, hidx);
     }
 
@@ -49,8 +49,8 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
     }
 
     @Override
-    protected void putEntry(DataWrapper entry, int hidx) {
-        DataWrapper tmp;
+    protected void putEntry(DataPayload entry, int hidx) {
+        DataPayload tmp;
 
         int currentProbeSeqLength = 0;
         while (isFilled(hidx)) {
@@ -79,7 +79,7 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
         int currentProbeSeqLength = 0;
 
         for (;isFilled(hidx) && currentProbeSeqLength <= probeSeqLength[hidx]; hidx = (hidx + 1) & lengthMask, currentProbeSeqLength++) {
-            if (keyEquals(entries[hidx].getAsciiString(), key)) {
+            if (keyEquals(entries[hidx].getKey(), key)) {
                 return hidx;
             }
         }
@@ -87,9 +87,9 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
     }
 
     @Override
-    protected boolean putIfEmpty(DataWrapper entry) {
-        int hidx = hashIndex(entry.getAsciiString());
-        int idx = find(hidx, entry.getAsciiString());
+    public boolean putIfEmpty(DataPayload entry) {
+        int hidx = hashIndex(entry.getKey());
+        int idx = find(hidx, entry.getKey());
 
         if (idx != NULL) {
             return false;
@@ -97,10 +97,11 @@ public class RobinHoodHashMap extends LinearProbingHashMap {
 
         if (count * 100 >= entries.length * loadFactor) {
             resizeTable(entries.length * 2);
-            hidx = hashIndex(entry.getAsciiString());
+            hidx = hashIndex(entry.getKey());
         }
 
         putEntry(entry, hidx);
         return true;
     }
+
 }
