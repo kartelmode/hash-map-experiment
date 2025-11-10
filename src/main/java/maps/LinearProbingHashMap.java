@@ -88,12 +88,27 @@ public class LinearProbingHashMap implements Cache {
         entries[idx].setInCachePosition(-1);
         entries[idx] = null;
 
-        for (int hidx = (idx + 1) & lengthMask; isFilled(hidx); hidx = (hidx + 1) & lengthMask) {
-            count--; // balance out count increment in the following putNewNoSpaceCheck()
-            DataPayload entry = entries[hidx];
-            entries[hidx] = null;
-            entry.setInCachePosition(-1);
-            putNewNoSpaceCheck(entry);
+        compactChain(idx);
+    }
+
+    private void compactChain(int deletedIdx) {
+        int curIdx = deletedIdx;
+
+        while (true) {
+            curIdx = (curIdx + 1) & lengthMask;
+            if (isEmpty(curIdx)) {
+                break;
+            }
+
+            DataPayload entry = entries[curIdx];
+            int hidx = hashIndex(entries[curIdx].getKey());
+            if ((curIdx < hidx && (hidx <= deletedIdx || deletedIdx <= curIdx)) ||
+                    (hidx <= deletedIdx && deletedIdx <= curIdx)) {
+                entries[deletedIdx] = entry;
+                entries[curIdx] = null;
+                entry.setInCachePosition(deletedIdx);
+                deletedIdx = curIdx;
+            }
         }
     }
 

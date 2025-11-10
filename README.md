@@ -116,3 +116,28 @@ These naming strategies include
 ```
 Where `<===` and `<---` mark combination of hash implementation that lead to "collapse" of open-addressing linear probing/robin hood implementations.
 Map implementation has to traverse thousands of filled buckets.
+
+This results was performed by using naive compacting chain after deleting the key from the map.
+
+The second version of linear probe implementation uses smarter compacting, where entries from the chain can be placed directly to empty cell that becomes empty after deletion or during compaction. 
+
+Updated benchmark:
+
+```declarative
+
+  (hashStrategy)  (keyNaming)   (mapClass)              Score          Error  Units |         Score Before      Error
+         xxHash       number  linearprobe               79.525 ±       0.454  ns/op |         82.806 +-         2.756  ns/op
+         xxHash           mm  linearprobe               83.803 ±       2.969  ns/op |         85.518 +-         2.238  ns/op
+         xxHash         uuid  linearprobe               94.212 ±       1.816  ns/op |         96.652 +-         0.763  ns/op
+        default       number  linearprobe               63.109 ±       1.282  ns/op |        116.161 +-         0.455  ns/op
+        default           mm  linearprobe          1549683.071 ± 1622445.151  ns/op | 3706548479.653 +-  26544201.756  ns/op
+        default         uuid  linearprobe              118.914 ±       3.430  ns/op |        119.056 +-         1.212  ns/op
+unrolledDefault       number  linearprobe               61.546 ±       0.379  ns/op |        110.477 +-         0.811  ns/op
+unrolledDefault           mm  linearprobe          1642120.311 ± 1546165.077  ns/op | 3486178559.167 +- 169273692.885  ns/op
+unrolledDefault         uuid  linearprobe              119.870 ±       9.814  ns/op |        121.661 +-        10.359  ns/op
+     nativeHash       number  linearprobe               66.201 ±       0.150  ns/op |         67.745 +-         0.655  ns/op
+     nativeHash           mm  linearprobe               70.191 ±       1.130  ns/op |         73.304 +-         1.138  ns/op  
+     nativeHash         uuid  linearprobe               76.748 ±       0.390  ns/op |         79.039 +-         1.733  ns/op
+```
+
+Optimisation of compacting chain gives about 5% performance improvement. As shown above, high improvement specifically for cases where elements lays in a large chain, that means about bad hash function for 50% load factor. 
