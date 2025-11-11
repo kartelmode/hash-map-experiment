@@ -136,6 +136,7 @@ public class HashMapBenchmark {
             case "robinhood" -> new RobinHoodHashMap(cacheCapacity, maxInactiveKeys, hash);
             case "nativeLinearprobe" -> new NativeLinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
             case "rawLinearprobe" -> new RawLinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "java" -> new JavaHashMap(cacheCapacity, maxInactiveKeys);
             default -> throw new IllegalArgumentException(cacheClass);
         };
     }

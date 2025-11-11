@@ -1,5 +1,7 @@
 package internal;
 
+import hashing.NativeHashCodeComputer;
+
 import static internal.UnsafeAccess.UNSAFE;
 import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
@@ -78,5 +80,10 @@ public final class AsciiString {
 //            sb.append((char)array[i]);
 //        }
 //        return sb.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return NativeHashCodeComputer.INSTANCE.hashCode(this);
     }
 }
