@@ -125,7 +125,7 @@ Updated benchmark:
 
 ```declarative
 
-  (hashStrategy)  (keyNaming)   (mapClass)              Score          Error  Units |         Score Before      Error
+  (hashStrategy)  (keyNaming)   (mapClass)              Score          Error  Units | Previous Score            Error
          xxHash       number  linearprobe               79.525 ±       0.454  ns/op |         82.806 +-         2.756  ns/op
          xxHash           mm  linearprobe               83.803 ±       2.969  ns/op |         85.518 +-         2.238  ns/op
          xxHash         uuid  linearprobe               94.212 ±       1.816  ns/op |         96.652 +-         0.763  ns/op
@@ -140,4 +140,37 @@ unrolledDefault         uuid  linearprobe              119.870 ±       9.814  n
      nativeHash         uuid  linearprobe               76.748 ±       0.390  ns/op |         79.039 +-         1.733  ns/op
 ```
 
-Optimisation of compacting chain gives about 5% performance improvement. As shown above, high improvement specifically for cases where elements lays in a large chain, that means about bad hash function for 50% load factor. 
+Optimisation of compacting chain gives about 5% performance improvement. As shown above, high improvement specifically for cases where elements lays in a large chain, that means about bad hash function for 50% load factor.
+
+Then 2 new versions of linear probe were implemented: nativeLinearprobe stores references to the keys and their parameters(address and length), rawLinearprobe stores copies of the keys as byte blocks with fixed length. 
+
+```declarative
+Benchmark                                           (hashStrategy)  (keyNaming)         (mapClass)      Score     Error      Units
+HashMapBenchmark.benchmark                                  xxHash       number        linearprobe     75.254 ±   2.048      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash       number        linearprobe      2.474 ±   0.449       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash       number        linearprobe     60.244 ±   1.548       #/op
+HashMapBenchmark.benchmark                                  xxHash       number  nativeLinearprobe    102.774 ±   2.339      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash       number  nativeLinearprobe      5.813 ±   0.542       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash       number  nativeLinearprobe     73.564 ±   1.229       #/op
+HashMapBenchmark.benchmark                                  xxHash       number     rawLinearprobe     89.855 ±   1.314      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash       number     rawLinearprobe      3.248 ±   0.099       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash       number     rawLinearprobe     66.344 ±   5.871       #/op
+HashMapBenchmark.benchmark                                  xxHash           mm        linearprobe     89.031 ±   2.027      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash           mm        linearprobe      2.663 ±   0.310       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash           mm        linearprobe     63.309 ±   0.381       #/op
+HashMapBenchmark.benchmark                                  xxHash           mm  nativeLinearprobe    111.904 ±   3.587      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash           mm  nativeLinearprobe      6.097 ±   0.762       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash           mm  nativeLinearprobe     74.224 ±   3.162       #/op
+HashMapBenchmark.benchmark                                  xxHash           mm     rawLinearprobe    107.345 ±   5.653      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash           mm     rawLinearprobe      3.369 ±   0.332       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash           mm     rawLinearprobe     68.218 ±  19.599       #/op
+HashMapBenchmark.benchmark                                  xxHash         uuid        linearprobe    113.748 ±   1.164      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash         uuid        linearprobe      2.699 ±   0.148       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash         uuid        linearprobe     66.682 ±   4.502       #/op
+HashMapBenchmark.benchmark                                  xxHash         uuid  nativeLinearprobe    126.916 ±   5.668      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash         uuid  nativeLinearprobe      6.111 ±   0.578       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash         uuid  nativeLinearprobe     78.539 ±  11.802       #/op
+HashMapBenchmark.benchmark                                  xxHash         uuid     rawLinearprobe    123.257 ±   5.396      ns/op
+HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash         uuid     rawLinearprobe      3.453 ±   0.511       #/op
+HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash         uuid     rawLinearprobe     71.522 ±   3.509       #/op
+```

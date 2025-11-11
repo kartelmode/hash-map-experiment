@@ -42,7 +42,7 @@ public class HashMapBenchmark {
     @Param({"xxHash", "default", "unrolledDefault", "nativeHash", "vectorizedDefaultHash"})
     private String hashStrategy = "xxHash";
 
-    @Param({"chaining", "linearprobe", "robinhood"})
+    @Param({"chaining", "linearprobe", "robinhood", "nativeLinearprobe", "rawLinearprobe"})
     private String mapClass = "chaining";
 
     @Param({"number", "mm", "uuid"})
@@ -134,6 +134,8 @@ public class HashMapBenchmark {
             case "chaining" -> new ChainingHashMap(cacheCapacity, maxInactiveKeys, hash);
             case "linearprobe" -> new LinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
             case "robinhood" -> new RobinHoodHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "nativeLinearprobe" -> new NativeLinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
+            case "rawLinearprobe" -> new RawLinearProbingHashMap(cacheCapacity, maxInactiveKeys, hash);
             default -> throw new IllegalArgumentException(cacheClass);
         };
     }
