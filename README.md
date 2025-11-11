@@ -174,3 +174,10 @@ HashMapBenchmark.benchmark                                  xxHash         uuid 
 HashMapBenchmark.benchmark:L1-dcache-load-misses:u          xxHash         uuid     rawLinearprobe      3.453 ±   0.511       #/op
 HashMapBenchmark.benchmark:L1-dcache-loads:u                xxHash         uuid     rawLinearprobe     71.522 ±   3.509       #/op
 ```
+
+The purpose of implementing these 2 maps was to check if avoiding dereferencing gives better performance or not. 
+Here we can see that native linear probe version has ~2 times worse performance than default linear probe. 
+
+Why so? Native version stores 3 additional arrays, so when we're trying to find value by the key, it accesses these 3 additional arrays and every cache miss in the entry array with high probability gives additional cache misses.
+
+This is acceptable for rawLinearprobe, because it stores additional array with proportional length to the capacity of hashmap. 
