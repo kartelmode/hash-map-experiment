@@ -142,7 +142,9 @@ unrolledDefault         uuid  linearprobe              119.870 ±       9.814  n
 
 Optimisation of compacting chain gives about 5% performance improvement. As shown above, high improvement specifically for cases where elements lays in a large chain, that means about bad hash function for 50% load factor.
 
-Then 2 new versions of linear probe were implemented: nativeLinearprobe stores references to the keys and their parameters(address and length), rawLinearprobe stores copies of the keys as byte blocks with fixed length. 
+## Experiments with storing keys
+
+Then 2 new versions of linear probe were implemented: nativeLinearprobe stores references to the keys and their parameters(address and length), rawLinearprobe stores copies of the keys as byte blocks with fixed length.
 
 ```declarative
 Benchmark                          (hashStrategy)  (keyNaming)         (mapClass)      Score     Error      Units
@@ -180,7 +182,11 @@ Here we can see that native linear probe version has ~2 times worse performance 
 
 Why so? Native version stores 3 additional arrays, so when we're trying to find value by the key, it accesses these 3 additional arrays and every cache miss in the entry array with high probability gives additional cache misses.
 
-This is acceptable for rawLinearprobe, because it stores additional array with proportional length to the capacity of hashmap.
+This is acceptable for rawLinearprobe too, because it stores additional array with proportional length to the capacity of hashmap.
+
+## java.util.collections.HashMap
+
+The data below demonstrates the results for hash map using `HashMap` from java.util.collections. For `number` and `mm` key naming strategy it works ideal with default hash function, whenever nativeHash is better for `uuid` naming strategy.
 
 ```declarative
 default
@@ -196,156 +202,74 @@ benchmark:L1-dcache-load-misses:u         uuid    2.394 ±   1.031       #/op
 benchmark:L1-dcache-loads:u               uuid   98.843 ±  16.895       #/op
 
 xxHash
-aws#29|Benchmark                                           (keyNaming)  (maxInactiveKeys)  Mode  Cnt    Score     Error      Units
-aws#29|HashMapBenchmark.benchmark                               number               4096  avgt    9   58.111 ±   1.885      ns/op
-aws#29|HashMapBenchmark.benchmark:CPI                           number               4096  avgt    3    0.793 ±   0.207  clks/insn
-aws#29|HashMapBenchmark.benchmark:IPC                           number               4096  avgt    3    1.261 ±   0.327  insns/clk
-aws#29|HashMapBenchmark.benchmark:L1-dcache-load-misses:u       number               4096  avgt    3    2.254 ±   0.132       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-loads:u             number               4096  avgt    3   62.263 ±   5.178       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-stores:u            number               4096  avgt    3   18.157 ±   1.270       #/op
-aws#29|HashMapBenchmark.benchmark:L1-icache-load-misses:u       number               4096  avgt    3    0.006 ±   0.008       #/op
-aws#29|HashMapBenchmark.benchmark:branch-misses:u               number               4096  avgt    3    0.288 ±   0.028       #/op
-aws#29|HashMapBenchmark.benchmark:branches:u                    number               4096  avgt    3   42.662 ±   0.611       #/op
-aws#29|HashMapBenchmark.benchmark:cycles:u                      number               4096  avgt    3  239.990 ±  68.300       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-load-misses:u            number               4096  avgt    3    0.607 ±   0.130       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-loads:u                  number               4096  avgt    3   61.613 ±  11.691       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-store-misses:u           number               4096  avgt    3    0.003 ±   0.002       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-stores:u                 number               4096  avgt    3   18.258 ±   1.901       #/op
-aws#29|HashMapBenchmark.benchmark:iTLB-load-misses:u            number               4096  avgt    3    0.001 ±   0.001       #/op
-aws#29|HashMapBenchmark.benchmark:instructions:u                number               4096  avgt    3  302.607 ±  14.665       #/op
-aws#29|HashMapBenchmark.benchmark                                   mm               4096  avgt    9   66.649 ±   6.655      ns/op
-aws#29|HashMapBenchmark.benchmark:CPI                               mm               4096  avgt    3    0.802 ±   0.948  clks/insn
-aws#29|HashMapBenchmark.benchmark:IPC                               mm               4096  avgt    3    1.251 ±   1.525  insns/clk
-aws#29|HashMapBenchmark.benchmark:L1-dcache-load-misses:u           mm               4096  avgt    3    2.428 ±   1.735       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-loads:u                 mm               4096  avgt    3   65.850 ±  22.173       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-stores:u                mm               4096  avgt    3   18.304 ±   2.778       #/op
-aws#29|HashMapBenchmark.benchmark:L1-icache-load-misses:u           mm               4096  avgt    3    0.007 ±   0.006       #/op
-aws#29|HashMapBenchmark.benchmark:branch-misses:u                   mm               4096  avgt    3    0.292 ±   0.071       #/op
-aws#29|HashMapBenchmark.benchmark:branches:u                        mm               4096  avgt    3   49.584 ±   2.930       #/op
-aws#29|HashMapBenchmark.benchmark:cycles:u                          mm               4096  avgt    3  275.235 ± 341.303       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-load-misses:u                mm               4096  avgt    3    0.674 ±   0.859       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-loads:u                      mm               4096  avgt    3   64.851 ±   8.634       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-store-misses:u               mm               4096  avgt    3    0.003 ±   0.001       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-stores:u                     mm               4096  avgt    3   18.365 ±   4.667       #/op
-aws#29|HashMapBenchmark.benchmark:iTLB-load-misses:u                mm               4096  avgt    3    0.001 ±   0.001       #/op
-aws#29|HashMapBenchmark.benchmark:instructions:u                    mm               4096  avgt    3  343.319 ±  25.761       #/op
-aws#29|HashMapBenchmark.benchmark                                 uuid               4096  avgt    9   75.715 ±   1.765      ns/op
-aws#29|HashMapBenchmark.benchmark:CPI                             uuid               4096  avgt    3    0.919 ±   0.108  clks/insn
-aws#29|HashMapBenchmark.benchmark:IPC                             uuid               4096  avgt    3    1.088 ±   0.128  insns/clk
-aws#29|HashMapBenchmark.benchmark:L1-dcache-load-misses:u         uuid               4096  avgt    3    2.647 ±   0.389       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-loads:u               uuid               4096  avgt    3   71.766 ±  17.781       #/op
-aws#29|HashMapBenchmark.benchmark:L1-dcache-stores:u              uuid               4096  avgt    3   28.583 ±   0.528       #/op
-aws#29|HashMapBenchmark.benchmark:L1-icache-load-misses:u         uuid               4096  avgt    3    0.009 ±   0.015       #/op
-aws#29|HashMapBenchmark.benchmark:branch-misses:u                 uuid               4096  avgt    3    0.295 ±   0.076       #/op
-aws#29|HashMapBenchmark.benchmark:branches:u                      uuid               4096  avgt    3   38.144 ±   4.838       #/op
-aws#29|HashMapBenchmark.benchmark:cycles:u                        uuid               4096  avgt    3  314.980 ±  29.392       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-load-misses:u              uuid               4096  avgt    3    0.700 ±   0.188       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-loads:u                    uuid               4096  avgt    3   70.645 ±  13.814       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-store-misses:u             uuid               4096  avgt    3    0.013 ±   0.029       #/op
-aws#29|HashMapBenchmark.benchmark:dTLB-stores:u                   uuid               4096  avgt    3   28.651 ±   4.135       #/op
-aws#29|HashMapBenchmark.benchmark:iTLB-load-misses:u              uuid               4096  avgt    3    0.001 ±   0.001       #/op
-aws#29|HashMapBenchmark.benchmark:instructions:u                  uuid               4096  avgt    3  342.841 ±  22.887       #/op
+Benchmark                           (keyNaming)    Score     Error      Units
+benchmark                               number    58.111 ±   1.885      ns/op
+benchmark:L1-dcache-load-misses:u       number     2.254 ±   0.132       #/op
+benchmark:L1-dcache-loads:u             number    62.263 ±   5.178       #/op
+benchmark                                   mm    66.649 ±   6.655      ns/op
+benchmark:L1-dcache-load-misses:u           mm     2.428 ±   1.735       #/op
+benchmark:L1-dcache-loads:u                 mm    65.850 ±  22.173       #/op
+benchmark                                 uuid    75.715 ±   1.765      ns/op
+benchmark:L1-dcache-load-misses:u         uuid     2.647 ±   0.389       #/op
+benchmark:L1-dcache-loads:u               uuid    71.766 ±  17.781       #/op
 
-Unrolled
-aws#33|Benchmark                                           (keyNaming)  (maxInactiveKeys)  Mode  Cnt    Score     Error      Units
-aws#33|HashMapBenchmark.benchmark                               number               4096  avgt    9   22.162 ±   0.201      ns/op
-aws#33|HashMapBenchmark.benchmark:CPI                           number               4096  avgt    3    0.342 ±   0.083  clks/insn
-aws#33|HashMapBenchmark.benchmark:IPC                           number               4096  avgt    3    2.925 ±   0.705  insns/clk
-aws#33|HashMapBenchmark.benchmark:L1-dcache-load-misses:u       number               4096  avgt    3    0.360 ±   0.030       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-loads:u             number               4096  avgt    3   79.363 ±   2.887       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-stores:u            number               4096  avgt    3   13.027 ±   0.927       #/op
-aws#33|HashMapBenchmark.benchmark:L1-icache-load-misses:u       number               4096  avgt    3    0.004 ±   0.002       #/op
-aws#33|HashMapBenchmark.benchmark:branch-misses:u               number               4096  avgt    3    0.086 ±   0.022       #/op
-aws#33|HashMapBenchmark.benchmark:branches:u                    number               4096  avgt    3   36.471 ±   3.156       #/op
-aws#33|HashMapBenchmark.benchmark:cycles:u                      number               4096  avgt    3  103.566 ±  14.829       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-load-misses:u            number               4096  avgt    3    0.030 ±   0.005       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-loads:u                  number               4096  avgt    3   81.903 ±   6.224       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-store-misses:u           number               4096  avgt    3   ≈ 10⁻⁴                 #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-stores:u                 number               4096  avgt    3   12.681 ±   1.959       #/op
-aws#33|HashMapBenchmark.benchmark:iTLB-load-misses:u            number               4096  avgt    3   ≈ 10⁻³                 #/op
-aws#33|HashMapBenchmark.benchmark:instructions:u                number               4096  avgt    3  302.906 ±  45.948       #/op
-aws#33|HashMapBenchmark.benchmark                                   mm               4096  avgt    9   26.371 ±   0.217      ns/op
-aws#33|HashMapBenchmark.benchmark:CPI                               mm               4096  avgt    3    0.306 ±   0.036  clks/insn
-aws#33|HashMapBenchmark.benchmark:IPC                               mm               4096  avgt    3    3.268 ±   0.379  insns/clk
-aws#33|HashMapBenchmark.benchmark:L1-dcache-load-misses:u           mm               4096  avgt    3    0.574 ±   0.212       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-loads:u                 mm               4096  avgt    3   88.569 ±   3.861       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-stores:u                mm               4096  avgt    3   15.555 ±   0.710       #/op
-aws#33|HashMapBenchmark.benchmark:L1-icache-load-misses:u           mm               4096  avgt    3    0.005 ±   0.003       #/op
-aws#33|HashMapBenchmark.benchmark:branch-misses:u                   mm               4096  avgt    3    0.194 ±   0.017       #/op
-aws#33|HashMapBenchmark.benchmark:branches:u                        mm               4096  avgt    3   43.391 ±   1.849       #/op
-aws#33|HashMapBenchmark.benchmark:cycles:u                          mm               4096  avgt    3  103.275 ±   9.022       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-load-misses:u                mm               4096  avgt    3    0.011 ±   0.013       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-loads:u                      mm               4096  avgt    3   87.766 ±   9.371       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-store-misses:u               mm               4096  avgt    3   ≈ 10⁻⁴                 #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-stores:u                     mm               4096  avgt    3   15.610 ±   1.123       #/op
-aws#33|HashMapBenchmark.benchmark:iTLB-load-misses:u                mm               4096  avgt    3   ≈ 10⁻³                 #/op
-aws#33|HashMapBenchmark.benchmark:instructions:u                    mm               4096  avgt    3  337.473 ±  26.695       #/op
-aws#33|HashMapBenchmark.benchmark                                 uuid               4096  avgt    9   92.472 ±   4.220      ns/op
-aws#33|HashMapBenchmark.benchmark:CPI                             uuid               4096  avgt    3    0.763 ±   0.338  clks/insn
-aws#33|HashMapBenchmark.benchmark:IPC                             uuid               4096  avgt    3    1.311 ±   0.584  insns/clk
-aws#33|HashMapBenchmark.benchmark:L1-dcache-load-misses:u         uuid               4096  avgt    3    2.398 ±   0.598       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-loads:u               uuid               4096  avgt    3  121.850 ±   6.490       #/op
-aws#33|HashMapBenchmark.benchmark:L1-dcache-stores:u              uuid               4096  avgt    3   12.919 ±   5.230       #/op
-aws#33|HashMapBenchmark.benchmark:L1-icache-load-misses:u         uuid               4096  avgt    3    0.010 ±   0.006       #/op
-aws#33|HashMapBenchmark.benchmark:branch-misses:u                 uuid               4096  avgt    3    0.303 ±   0.019       #/op
-aws#33|HashMapBenchmark.benchmark:branches:u                      uuid               4096  avgt    3   47.512 ±   4.718       #/op
-aws#33|HashMapBenchmark.benchmark:cycles:u                        uuid               4096  avgt    3  379.669 ± 161.702       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-load-misses:u              uuid               4096  avgt    3    0.709 ±   0.313       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-loads:u                    uuid               4096  avgt    3  122.920 ±   8.494       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-store-misses:u             uuid               4096  avgt    3    0.007 ±   0.019       #/op
-aws#33|HashMapBenchmark.benchmark:dTLB-stores:u                   uuid               4096  avgt    3   13.480 ±   2.239       #/op
-aws#33|HashMapBenchmark.benchmark:iTLB-load-misses:u              uuid               4096  avgt    3    0.001 ±   0.001       #/op
-aws#33|HashMapBenchmark.benchmark:instructions:u                  uuid               4096  avgt    3  497.391 ±  10.197       #/op
+unrolledDefault
+Benchmark                           (keyNaming)    Score     Error      Units
+benchmark                               number    22.162 ±   0.201      ns/op
+benchmark:L1-dcache-load-misses:u       number     0.360 ±   0.030       #/op
+benchmark:L1-dcache-loads:u             number    79.363 ±   2.887       #/op
+benchmark                                   mm    26.371 ±   0.217      ns/op
+benchmark:L1-dcache-load-misses:u           mm     0.574 ±   0.212       #/op
+benchmark:L1-dcache-loads:u                 mm    88.569 ±   3.861       #/op
+benchmark                                 uuid    92.472 ±   4.220      ns/op
+benchmark:L1-dcache-load-misses:u         uuid     2.398 ±   0.598       #/op
+benchmark:L1-dcache-loads:u               uuid   121.850 ±   6.490       #/op
 
-NativeHash
-aws#37|Benchmark                                           (keyNaming)  (maxInactiveKeys)  Mode  Cnt    Score     Error      Units
-aws#37|HashMapBenchmark.benchmark                               number               4096  avgt    9   43.721 ±   1.008      ns/op
-aws#37|HashMapBenchmark.benchmark:CPI                           number               4096  avgt    3    0.970 ±   0.283  clks/insn
-aws#37|HashMapBenchmark.benchmark:IPC                           number               4096  avgt    3    1.031 ±   0.298  insns/clk
-aws#37|HashMapBenchmark.benchmark:L1-dcache-load-misses:u       number               4096  avgt    3    2.230 ±   0.402       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-loads:u             number               4096  avgt    3   51.242 ±   4.802       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-stores:u            number               4096  avgt    3   10.016 ±   0.268       #/op
-aws#37|HashMapBenchmark.benchmark:L1-icache-load-misses:u       number               4096  avgt    3    0.005 ±   0.003       #/op
-aws#37|HashMapBenchmark.benchmark:branch-misses:u               number               4096  avgt    3    0.284 ±   0.009       #/op
-aws#37|HashMapBenchmark.benchmark:branches:u                    number               4096  avgt    3   32.816 ±   3.866       #/op
-aws#37|HashMapBenchmark.benchmark:cycles:u                      number               4096  avgt    3  184.027 ±  50.602       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-load-misses:u            number               4096  avgt    3    0.614 ±   0.298       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-loads:u                  number               4096  avgt    3   51.084 ±   5.573       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-store-misses:u           number               4096  avgt    3    0.007 ±   0.006       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-stores:u                 number               4096  avgt    3   10.005 ±   2.201       #/op
-aws#37|HashMapBenchmark.benchmark:iTLB-load-misses:u            number               4096  avgt    3    0.001 ±   0.001       #/op
-aws#37|HashMapBenchmark.benchmark:instructions:u                number               4096  avgt    3  189.647 ±  23.596       #/op
-aws#37|HashMapBenchmark.benchmark                                   mm               4096  avgt    9   51.173 ±   5.154      ns/op
-aws#37|HashMapBenchmark.benchmark:CPI                               mm               4096  avgt    3    1.030 ±   1.242  clks/insn
-aws#37|HashMapBenchmark.benchmark:IPC                               mm               4096  avgt    3    0.973 ±   1.142  insns/clk
-aws#37|HashMapBenchmark.benchmark:L1-dcache-load-misses:u           mm               4096  avgt    3    2.372 ±   2.022       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-loads:u                 mm               4096  avgt    3   55.337 ±   3.230       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-stores:u                mm               4096  avgt    3   10.394 ±   2.857       #/op
-aws#37|HashMapBenchmark.benchmark:L1-icache-load-misses:u           mm               4096  avgt    3    0.006 ±   0.014       #/op
-aws#37|HashMapBenchmark.benchmark:branch-misses:u                   mm               4096  avgt    3    0.282 ±   0.058       #/op
-aws#37|HashMapBenchmark.benchmark:branches:u                        mm               4096  avgt    3   29.734 ±   0.637       #/op
-aws#37|HashMapBenchmark.benchmark:cycles:u                          mm               4096  avgt    3  215.250 ± 274.140       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-load-misses:u                mm               4096  avgt    3    0.658 ±   0.803       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-loads:u                      mm               4096  avgt    3   54.303 ±  18.876       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-store-misses:u               mm               4096  avgt    3    0.010 ±   0.009       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-stores:u                     mm               4096  avgt    3   10.187 ±   1.467       #/op
-aws#37|HashMapBenchmark.benchmark:iTLB-load-misses:u                mm               4096  avgt    3    0.001 ±   0.001       #/op
-aws#37|HashMapBenchmark.benchmark:instructions:u                    mm               4096  avgt    3  208.912 ±  13.790       #/op
-aws#37|HashMapBenchmark.benchmark                                 uuid               4096  avgt    9   58.878 ±   0.913      ns/op
-aws#37|HashMapBenchmark.benchmark:CPI                             uuid               4096  avgt    3    1.053 ±   0.177  clks/insn
-aws#37|HashMapBenchmark.benchmark:IPC                             uuid               4096  avgt    3    0.950 ±   0.161  insns/clk
-aws#37|HashMapBenchmark.benchmark:L1-dcache-load-misses:u         uuid               4096  avgt    3    2.459 ±   0.508       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-loads:u               uuid               4096  avgt    3   60.936 ±  25.030       #/op
-aws#37|HashMapBenchmark.benchmark:L1-dcache-stores:u              uuid               4096  avgt    3   10.645 ±   5.671       #/op
-aws#37|HashMapBenchmark.benchmark:L1-icache-load-misses:u         uuid               4096  avgt    3    0.007 ±   0.011       #/op
-aws#37|HashMapBenchmark.benchmark:branch-misses:u                 uuid               4096  avgt    3    0.285 ±   0.064       #/op
-aws#37|HashMapBenchmark.benchmark:branches:u                      uuid               4096  avgt    3   31.350 ±  13.276       #/op
-aws#37|HashMapBenchmark.benchmark:cycles:u                        uuid               4096  avgt    3  247.079 ±  75.335       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-load-misses:u              uuid               4096  avgt    3    0.685 ±   0.113       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-loads:u                    uuid               4096  avgt    3   60.434 ±   6.667       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-store-misses:u             uuid               4096  avgt    3    0.009 ±   0.001       #/op
-aws#37|HashMapBenchmark.benchmark:dTLB-stores:u                   uuid               4096  avgt    3   10.483 ±   0.856       #/op
-aws#37|HashMapBenchmark.benchmark:iTLB-load-misses:u              uuid               4096  avgt    3    0.001 ±   0.001       #/op
-aws#37|HashMapBenchmark.benchmark:instructions:u                  uuid               4096  avgt    3  234.705 ±  92.008       #/op
+nativeHash
+Benchmark                           (keyNaming)    Score     Error      Units
+benchmark                               number    43.721 ±   1.008      ns/op
+benchmark:L1-dcache-load-misses:u       number     2.230 ±   0.402       #/op
+benchmark:L1-dcache-loads:u             number    51.242 ±   4.802       #/op
+benchmark                                   mm    51.173 ±   5.154      ns/op
+benchmark:L1-dcache-load-misses:u           mm     2.372 ±   2.022       #/op
+benchmark:L1-dcache-loads:u                 mm    55.337 ±   3.230       #/op
+benchmark                                 uuid    58.878 ±   0.913      ns/op
+benchmark:L1-dcache-load-misses:u         uuid     2.459 ±   0.508       #/op
+benchmark:L1-dcache-loads:u               uuid    60.936 ±  25.030       #/op
 
 ```
+
+## Leaderboards
+
+The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy.
+
+### Number (keyNaming)
+
+| xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
+|---------------------------------|---------------------------------|---------------------------------|---------------------------------|
+| Java's HashMap (58.111 ± 1.885) | Java's HashMap (23.086 ± 0.261) | Java's HashMap (22.162 ± 0.201) | Java's HashMap (43.721 ± 1.008) |
+| RobinHood      (63.400 ± 0.803) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (57.003 ± 0.823) |
+| Linearprobe    (79.525 ± 0.454) | RobinHood      (47.980 ± 0.083) | RobinHood      (46.476 ± 0.612) | Linearprobe    (66.201 ± 0.150) |
+| Chaining       (96.749 ± 2.714) | Linearprobe    (63.109 ± 1.282) | Linearprobe    (61.546 ± 0.379) | Chaining       (86.195 ± 1.347) |
+
+
+### MM (keyNaming)
+
+| xxHash                                | default                                    | unrolledDefault                            | nativeHash                      |
+|---------------------------------------|--------------------------------------------|--------------------------------------------|---------------------------------|
+| RobinHood           (67.052  ± 2.235) | Java's HashMap (26.555      ±       0.608) | Java's HashMap (26.371      ±       0.217) | Java's HashMap (51.173 ± 5.154) |
+| Java's HashMap      (66.649  ± 6.655) | Chaining       (34.516      ±       1.273) | Chaining       (32.873      ±       0.193) | RobinHood      (58.952 ± 1.300) |
+| Linearprobe         (83.803  ± 2.969) | RobinHood      (114763.383  ±     166.797) | RobinHood      (114589.742  ±      83.337) | Linearprobe    (70.191 ± 1.130) |
+| Chaining            (100.416 ± 5.265) | Linearprobe    (1549683.071 ± 1622445.151) | Linearprobe    (1642120.311 ± 1546165.077) | Chaining       (88.288 ± 0.929) |
+
+
+### UUID (keyNaming)
+
+TODO:
+
+| xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
+|---------------------------------|---------------------------------|---------------------------------|---------------------------------|
+| Java's HashMap (58.111 ± 1.885) | Java's HashMap (23.086 ± 0.261) | Java's HashMap (22.162 ± 0.201) | Java's HashMap (43.721 ± 1.008) |
+| RobinHood      (63.400 ± 0.803) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (57.003 ± 0.823) |
+| Linearprobe    (79.525 ± 0.454) | RobinHood      (47.980 ± 0.083) | RobinHood      (46.476 ± 0.612) | Linearprobe    (66.201 ± 0.150) |
+| Chaining       (96.749 ± 2.714) | Linearprobe    (63.109 ± 1.282) | Linearprobe    (61.546 ± 0.379) | Chaining       (86.195 ± 1.347) |
