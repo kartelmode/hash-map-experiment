@@ -265,11 +265,9 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 ### UUID (keyNaming)
 
-TODO:
-
-| xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
-|---------------------------------|---------------------------------|---------------------------------|---------------------------------|
-| Java's HashMap (58.111 ± 1.885) | Java's HashMap (23.086 ± 0.261) | Java's HashMap (22.162 ± 0.201) | Java's HashMap (43.721 ± 1.008) |
-| RobinHood      (63.400 ± 0.803) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (57.003 ± 0.823) |
-| Linearprobe    (79.525 ± 0.454) | RobinHood      (47.980 ± 0.083) | RobinHood      (46.476 ± 0.612) | Linearprobe    (66.201 ± 0.150) |
-| Chaining       (96.749 ± 2.714) | Linearprobe    (63.109 ± 1.282) | Linearprobe    (61.546 ± 0.379) | Chaining       (86.195 ± 1.347) |
+| xxHash                            | default                           | unrolledDefault                   | nativeHash                        |
+|-----------------------------------|-----------------------------------|-----------------------------------|-----------------------------------|
+| RobinHood      (71.194  ±  0.565) | RobinHood      (84.199  ±  1.362) | RobinHood      (87.834  ±  4.914) | Java's HashMap (58.878  ±  0.913) |
+| Java's HashMap (75.715  ±  1.765) | Java's HashMap (92.757  ±  3.888) | Java's HashMap (92.472  ±  4.220) | RobinHood      (60.807  ±  1.081) |
+| Linearprobe    (94.212  ±  1.816) | Linearprobe    (118.914 ±  3.430) | Linearprobe    (119.870 ±  9.814) | Linearprobe    (76.748  ±  0.390) |
+| Chaining       (123.539 ± 20.780) | Chaining       (129.748 ± 13.359) | Chaining       (132.138 ± 10.183) | Chaining       (101.192 ± 24.068) |
