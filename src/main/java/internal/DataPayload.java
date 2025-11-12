@@ -9,6 +9,10 @@ public class DataPayload {
         this.key = key;
     }
 
+    public DataPayload(CharSequence key) {
+        this.key = new AsciiString(key);
+    }
+
     public void setInCachePosition(int inCachePosition) {
         this.inCachePosition = inCachePosition;
     }

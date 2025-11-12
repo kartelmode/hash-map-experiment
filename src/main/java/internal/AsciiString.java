@@ -31,10 +31,15 @@ public final class AsciiString {
         return length;
     }
 
-    public boolean equals(AsciiString other) {
-        if (other == null) {
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
             return false;
         }
+        if (this == o) {
+            return true;
+        }
+        AsciiString other = (AsciiString) o;
         if (other.length != length) {
             return false;
         }

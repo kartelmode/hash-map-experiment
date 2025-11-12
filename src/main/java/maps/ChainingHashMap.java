@@ -25,7 +25,7 @@ public final class ChainingHashMap implements Cache {
 
     private final FixedSizeQueue<DataPayload> inactiveDataQueue;
 
-    ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
+    public ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         if (initialActiveDataCount < MIN_CAPACITY)
             initialActiveDataCount = MIN_CAPACITY;
 

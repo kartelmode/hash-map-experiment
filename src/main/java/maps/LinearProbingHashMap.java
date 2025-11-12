@@ -20,11 +20,11 @@ public class LinearProbingHashMap implements Cache {
 
     protected final FixedSizeQueue<DataPayload> inactiveDataQueue; // contains most recent inactive orders
 
-    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
+    public LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         this(activeDataCount, maxInactiveDataCount, hashCodeComputer, DEFAULT_LOAD_FACTOR);
     }
 
-    LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
+    public LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
         if (activeDataCount < MIN_CAPACITY)
             activeDataCount = MIN_CAPACITY;
 

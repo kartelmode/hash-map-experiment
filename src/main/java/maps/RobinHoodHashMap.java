@@ -7,11 +7,11 @@ import internal.DataPayload;
 public final class RobinHoodHashMap extends LinearProbingHashMap {
     private int[] probeSeqLength;
 
-    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
+    public RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
         super(activeDataCount, maxInactiveDataCount, hashCodeComputer);
     }
 
-    RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
+    public RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
         super(activeDataCount, maxInactiveDataCount, hashCodeComputer, loadFactor);
     }
 

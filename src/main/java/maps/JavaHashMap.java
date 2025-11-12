@@ -28,7 +28,7 @@ public class JavaHashMap implements Cache {
 
     @Override
     public boolean putIfEmpty(DataPayload entry) {
-        if (get(entry.getKey()) != null) {
+        if (map.containsKey(entry.getKey())) {
             return false;
         }
         return map.put(entry.getKey(), entry) == null;
