@@ -189,54 +189,54 @@ This is acceptable for rawLinearprobe too, because it stores additional array wi
 The data below demonstrates the results for hash map using `HashMap` from java.util.collections. For `number` and `mm` key naming strategy it works ideal with default hash function, whenever nativeHash is better for `uuid` naming strategy.
 
 ```declarative
-default
-Benchmark                          (keyNaming)    Score     Error      Units
-benchmark                               number   23.086 ±   0.261      ns/op
-benchmark:L1-dcache-load-misses:u       number    0.361 ±   0.474       #/op
-benchmark:L1-dcache-loads:u             number   73.606 ±   3.857       #/op
-benchmark                                   mm   26.555 ±   0.608      ns/op
-benchmark:L1-dcache-load-misses:u           mm    0.567 ±   0.513       #/op
-benchmark:L1-dcache-loads:u                 mm   73.848 ±  15.163       #/op
-benchmark                                 uuid   92.757 ±   3.888      ns/op
-benchmark:L1-dcache-load-misses:u         uuid    2.394 ±   1.031       #/op
-benchmark:L1-dcache-loads:u               uuid   98.843 ±  16.895       #/op
-
 xxHash
-Benchmark                           (keyNaming)    Score     Error      Units
-benchmark                               number    58.111 ±   1.885      ns/op
-benchmark:L1-dcache-load-misses:u       number     2.254 ±   0.132       #/op
-benchmark:L1-dcache-loads:u             number    62.263 ±   5.178       #/op
-benchmark                                   mm    66.649 ±   6.655      ns/op
-benchmark:L1-dcache-load-misses:u           mm     2.428 ±   1.735       #/op
-benchmark:L1-dcache-loads:u                 mm    65.850 ±  22.173       #/op
-benchmark                                 uuid    75.715 ±   1.765      ns/op
-benchmark:L1-dcache-load-misses:u         uuid     2.647 ±   0.389       #/op
-benchmark:L1-dcache-loads:u               uuid    71.766 ±  17.781       #/op
+Benchmark                           (keyNaming)     Score     Error      Units
+benchmark                               number     58.471 ±   1.320      ns/op
+benchmark:L1-dcache-load-misses:u       number      2.263 ±   0.210       #/op
+benchmark:L1-dcache-loads:u             number     64.861 ±   5.354       #/op
+benchmark                                   mm     62.892 ±   4.111      ns/op
+benchmark:L1-dcache-load-misses:u           mm      2.343 ±   1.518       #/op
+benchmark:L1-dcache-loads:u                 mm     66.054 ±  24.938       #/op
+benchmark                                 uuid     76.812 ±   2.818      ns/op
+benchmark:L1-dcache-load-misses:u         uuid      2.644 ±   0.482       #/op
+benchmark:L1-dcache-loads:u               uuid     69.869 ±  43.915       #/op
+
+default
+
+Benchmark                           (keyNaming)     Score    Error      Units
+benchmark                               number     22.727 ±  0.283      ns/op
+benchmark:L1-dcache-load-misses:u       number      0.375 ±  0.276       #/op
+benchmark:L1-dcache-loads:u             number     67.625 ± 10.178       #/op
+benchmark                                   mm     35.500 ±  0.217      ns/op
+benchmark:L1-dcache-load-misses:u           mm      1.388 ±  0.556       #/op
+benchmark:L1-dcache-loads:u                 mm     92.779 ±  2.693       #/op
+benchmark                                 uuid     94.640 ±  3.484      ns/op
+benchmark:L1-dcache-load-misses:u         uuid      2.396 ±  0.731       #/op
+benchmark:L1-dcache-loads:u               uuid    100.120 ± 14.689       #/op
 
 unrolledDefault
-Benchmark                           (keyNaming)    Score     Error      Units
-benchmark                               number    22.162 ±   0.201      ns/op
-benchmark:L1-dcache-load-misses:u       number     0.360 ±   0.030       #/op
-benchmark:L1-dcache-loads:u             number    79.363 ±   2.887       #/op
-benchmark                                   mm    26.371 ±   0.217      ns/op
-benchmark:L1-dcache-load-misses:u           mm     0.574 ±   0.212       #/op
-benchmark:L1-dcache-loads:u                 mm    88.569 ±   3.861       #/op
-benchmark                                 uuid    92.472 ±   4.220      ns/op
-benchmark:L1-dcache-load-misses:u         uuid     2.398 ±   0.598       #/op
-benchmark:L1-dcache-loads:u               uuid   121.850 ±   6.490       #/op
+Benchmark                          (keyNaming)      Score     Error      Units
+benchmark                               number     22.059 ±   0.372      ns/op
+benchmark:L1-dcache-load-misses:u       number      0.369 ±   0.180       #/op
+benchmark:L1-dcache-loads:u             number     79.233 ±   5.054       #/op
+benchmark                                   mm     34.331 ±   0.560      ns/op
+benchmark:L1-dcache-load-misses:u           mm      1.397 ±   0.435       #/op
+benchmark:L1-dcache-loads:u                 mm    111.564 ±  22.118       #/op
+benchmark                                 uuid     91.850 ±   6.611      ns/op
+benchmark:L1-dcache-load-misses:u         uuid      2.366 ±   1.034       #/op
+benchmark:L1-dcache-loads:u               uuid    120.489 ±   7.257       #/op
 
-nativeHash
-Benchmark                           (keyNaming)    Score     Error      Units
-benchmark                               number    43.721 ±   1.008      ns/op
-benchmark:L1-dcache-load-misses:u       number     2.230 ±   0.402       #/op
-benchmark:L1-dcache-loads:u             number    51.242 ±   4.802       #/op
-benchmark                                   mm    51.173 ±   5.154      ns/op
-benchmark:L1-dcache-load-misses:u           mm     2.372 ±   2.022       #/op
-benchmark:L1-dcache-loads:u                 mm    55.337 ±   3.230       #/op
-benchmark                                 uuid    58.878 ±   0.913      ns/op
-benchmark:L1-dcache-load-misses:u         uuid     2.459 ±   0.508       #/op
-benchmark:L1-dcache-loads:u               uuid    60.936 ±  25.030       #/op
-
+NativeHash
+Benchmark                          (keyNaming)      Score     Error      Units
+benchmark                               number     43.757 ±   0.999      ns/op
+benchmark:L1-dcache-load-misses:u       number      2.206 ±   0.241       #/op
+benchmark:L1-dcache-loads:u             number     49.692 ±   3.653       #/op
+benchmark                                   mm     50.681 ±   3.274      ns/op
+benchmark:L1-dcache-load-misses:u           mm      2.333 ±   1.438       #/op
+benchmark:L1-dcache-loads:u                 mm     53.991 ±   5.983       #/op
+benchmark                                 uuid     59.658 ±   2.141      ns/op
+benchmark:L1-dcache-load-misses:u         uuid      2.437 ±   0.370       #/op
+benchmark:L1-dcache-loads:u               uuid     59.567 ±   8.855       #/op
 ```
 
 ## Leaderboards
@@ -247,7 +247,7 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 | xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
 |---------------------------------|---------------------------------|---------------------------------|---------------------------------|
-| Java's HashMap (58.111 ± 1.885) | Java's HashMap (23.086 ± 0.261) | Java's HashMap (22.162 ± 0.201) | Java's HashMap (43.721 ± 1.008) |
+| Java's HashMap (58.471 ± 1.320) | Java's HashMap (22.727 ± 0.283) | Java's HashMap (22.059 ± 0.372) | Java's HashMap (43.757 ± 0.999) |
 | RobinHood      (63.400 ± 0.803) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (57.003 ± 0.823) |
 | Linearprobe    (79.525 ± 0.454) | RobinHood      (47.980 ± 0.083) | RobinHood      (46.476 ± 0.612) | Linearprobe    (66.201 ± 0.150) |
 | Chaining       (96.749 ± 2.714) | Linearprobe    (63.109 ± 1.282) | Linearprobe    (61.546 ± 0.379) | Chaining       (86.195 ± 1.347) |
@@ -257,8 +257,8 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 | xxHash                                | default                                    | unrolledDefault                            | nativeHash                      |
 |---------------------------------------|--------------------------------------------|--------------------------------------------|---------------------------------|
-| RobinHood           (67.052  ± 2.235) | Java's HashMap (26.555      ±       0.608) | Java's HashMap (26.371      ±       0.217) | Java's HashMap (51.173 ± 5.154) |
-| Java's HashMap      (66.649  ± 6.655) | Chaining       (34.516      ±       1.273) | Chaining       (32.873      ±       0.193) | RobinHood      (58.952 ± 1.300) |
+| RobinHood           (62.892  ± 4.111) | Chaining       (34.516      ±       1.273) | Java's HashMap (34.331      ±       0.560) | Java's HashMap (50.681 ± 3.274) |
+| Java's HashMap      (66.649  ± 6.655) | Java's HashMap (35.500      ±       0.217) | Chaining       (32.873      ±       0.193) | RobinHood      (58.952 ± 1.300) |
 | Linearprobe         (83.803  ± 2.969) | RobinHood      (114763.383  ±     166.797) | RobinHood      (114589.742  ±      83.337) | Linearprobe    (70.191 ± 1.130) |
 | Chaining            (100.416 ± 5.265) | Linearprobe    (1549683.071 ± 1622445.151) | Linearprobe    (1642120.311 ± 1546165.077) | Chaining       (88.288 ± 0.929) |
 
@@ -267,7 +267,7 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 | xxHash                            | default                           | unrolledDefault                   | nativeHash                        |
 |-----------------------------------|-----------------------------------|-----------------------------------|-----------------------------------|
-| RobinHood      (71.194  ±  0.565) | RobinHood      (84.199  ±  1.362) | RobinHood      (87.834  ±  4.914) | Java's HashMap (58.878  ±  0.913) |
-| Java's HashMap (75.715  ±  1.765) | Java's HashMap (92.757  ±  3.888) | Java's HashMap (92.472  ±  4.220) | RobinHood      (60.807  ±  1.081) |
+| RobinHood      (71.194  ±  0.565) | RobinHood      (84.199  ±  1.362) | RobinHood      (87.834  ±  4.914) | Java's HashMap (59.658  ±  2.141) |
+| Java's HashMap (76.812  ±  2.818) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (94.640  ±  3.484) | RobinHood      (60.807  ±  1.081) |
 | Linearprobe    (94.212  ±  1.816) | Linearprobe    (118.914 ±  3.430) | Linearprobe    (119.870 ±  9.814) | Linearprobe    (76.748  ±  0.390) |
 | Chaining       (123.539 ± 20.780) | Chaining       (129.748 ± 13.359) | Chaining       (132.138 ± 10.183) | Chaining       (101.192 ± 24.068) |
