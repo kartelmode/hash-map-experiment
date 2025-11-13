@@ -11,6 +11,8 @@ These naming strategies include
 * something we internally call `mm` - key is constructed using constant prefix followed by base32 sequence number (e.g. "SOURCE13:T3AAA402"),
 * UUID (e.g. "BE3F223A-3E39-443E-AEB8-3932A850C051")
 
+TODO: header, описание хешей, добавить выводы из таблиц
+
 | Hash                   | number   | mm        | uuid     |
 |------------------------|----------|-----------|----------|
 | varHandle              | 13047618 | 13050294  | 13051122 |
@@ -262,9 +264,18 @@ benchmark:gc.time                    uuid    370.000               ms
 
 From the info above we can see that Java's hashmap allocates data that is unacceptable in our case, because it causes calling garbage collection that is bad for latency in the real life.
 
+// TODO: refactor
+As we know that Java's implementation has allocations, so we don't include it in this recommendations for latency-sensitive systems.
+
 ## Leaderboards
 
+// TODO: add plots
+
 The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy. All results were measured on `Amazon EC2 r7iz.xlarge` instance with 128 CPU cores.
+
+// TODO: add ns/op (smaller is better)
+
+// TODO: add top-5 for every strategy
 
 ### Number
 
@@ -297,8 +308,6 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 
 ## Conclusion
-
-As we know that Java's implementation has allocations, so we don't include it in this recommendations for latency-sensitive systems.
 
 For `Number` and `MM` it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap implementation that is zero allocating in the long term.
 
