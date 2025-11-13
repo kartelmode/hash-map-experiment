@@ -13,10 +13,23 @@ public class NativeHashCodeComputer extends  HashCodeComputer {
     protected int hashCode(byte[] input, Unsafe unsafeAccess, long address, int off, int length) {
         long hash = 0;
         int i = 0;
-        for (i = 0; i < length; i += 4) {
+        for (i = 0; i + 4 <= length; i += 4) {
             hash = M2 * hash + unsafeAccess.getInt(input, address + off + i);
         }
         hash *= M2;
+        int value = 0;
+        if (i + 2 <= length) {
+            value += unsafeAccess.getShort(input, address + off + i);
+            i += 2;
+        }
+        if (i < length) {
+            value <<= 8;
+            value += unsafeAccess.getByte(input, address + off + i);
+        }
+        if (value != 0) {
+            hash += value;
+            hash *= M2;
+        }
         return (int)hash ^ (int)(hash >>> 25);
     }
 

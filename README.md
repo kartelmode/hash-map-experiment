@@ -264,7 +264,7 @@ From the info above we can see that Java's hashmap allocates data that is unacce
 
 ## Leaderboards
 
-The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy.
+The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy. All results were measured on `Amazon EC2 r7iz.xlarge` instance with 128 CPU cores.
 
 ### Number
 
@@ -300,9 +300,9 @@ The tables below demonstrate statistical leaderboards for every hash function fo
 
 As we know that Java's implementation has allocations, so we don't include it in this recommendations for latency-sensitive systems.
 
-For `Number` and `MM` it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap implementation with zero allocations in the long term.
+For `Number` and `MM` it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap implementation that is zero allocating in the long term.
 
-For `UUID` it's recommended to use `nativeHash` hash function with `RobinHood` hashmap implementation with zero allocations in the long term.
+For `UUID` it's recommended to use `nativeHash` hash function with `RobinHood` hashmap implementation that is zero allocating in the long term.
 
 Other unknown for this experiment key naming strategies should use `nativeHash` or `xxHash` with `RobinHood`, because these combinations give more stable performance results for random and not only keys. 
 
