@@ -119,17 +119,16 @@ public final class ChainingHashMap implements Cache {
 
     @Override
     public boolean putIfEmpty(DataPayload entry) {
+        if (freeHead == NULL) {
+            resizeTable(entries.length * 2);
+        }
+
         AsciiString key = entry.getKey();
         int hidx = hashIndex(key);
         int idx = find(hidx, key);
 
         if (idx != NULL) {
             return false;
-        }
-
-        if (freeHead == NULL) {
-            resizeTable(entries.length * 2);
-            hidx = hashIndex(key); // recompute!
         }
 
         idx = allocEntry(hidx);
@@ -142,14 +141,7 @@ public final class ChainingHashMap implements Cache {
     private void putNewNoSpaceCheck(DataPayload entry) {
         AsciiString key = entry.getKey();
         int hidx = hashIndex(key);
-        int idx = find(hidx, key);
-
-        if (idx != NULL)
-            throw new IllegalArgumentException(
-                    "Value for key " + key + " already exists = " + entry
-            );
-
-        idx = allocEntry(hidx);
+        int idx = allocEntry(hidx);
 
         putEntry(idx, entry);
     }
