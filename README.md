@@ -239,35 +239,71 @@ benchmark:L1-dcache-load-misses:u         uuid      2.437 ±   0.370       #/op
 benchmark:L1-dcache-loads:u               uuid     59.567 ±   8.855       #/op
 ```
 
+### Allocations
+
+```declarative
+                              (keyNaming)      Score    Error   Units
+benchmark                          number     41.716 ±  1.443   ns/op
+benchmark:gc.alloc.rate            number    182.955 ±  6.418  MB/sec
+benchmark:gc.alloc.rate.norm       number      8.000 ±  0.001    B/op
+benchmark:gc.count                 number     21.000           counts
+benchmark:gc.time                  number    425.000               ms
+benchmark                              mm     45.773 ±  0.748   ns/op
+benchmark:gc.alloc.rate                mm    166.689 ±  2.712  MB/sec
+benchmark:gc.alloc.rate.norm           mm      8.000 ±  0.001    B/op
+benchmark:gc.count                     mm     18.000           counts
+benchmark:gc.time                      mm    329.000               ms
+benchmark                            uuid     51.819 ±  0.883   ns/op
+benchmark:gc.alloc.rate              uuid    147.243 ±  2.499  MB/sec
+benchmark:gc.alloc.rate.norm         uuid      8.000 ±  0.001    B/op
+benchmark:gc.count                   uuid     24.000           counts
+benchmark:gc.time                    uuid    370.000               ms
+```
+
+From the info above we can see that Java's hashmap allocates data that is unacceptable in our case, because it causes calling garbage collection that is bad for latency in the real life.
+
 ## Leaderboards
 
 The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy.
 
-### Number (keyNaming)
+### Number
 
 | xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
 |---------------------------------|---------------------------------|---------------------------------|---------------------------------|
 | Java's HashMap (58.471 ± 1.320) | Java's HashMap (22.727 ± 0.283) | Java's HashMap (22.059 ± 0.372) | Java's HashMap (43.757 ± 0.999) |
-| RobinHood      (63.400 ± 0.803) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (57.003 ± 0.823) |
-| Linearprobe    (79.525 ± 0.454) | RobinHood      (47.980 ± 0.083) | RobinHood      (46.476 ± 0.612) | Linearprobe    (66.201 ± 0.150) |
-| Chaining       (96.749 ± 2.714) | Linearprobe    (63.109 ± 1.282) | Linearprobe    (61.546 ± 0.379) | Chaining       (86.195 ± 1.347) |
+| RobinHood      (58.937 ± 2.635) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (46.592 ± 0.482) |
+| Linearprobe    (71.057 ± 0.630) | RobinHood      (47.016 ± 0.371) | RobinHood      (44.937 ± 0.142) | Linearprobe    (57.325 ± 1.668) |
+| Chaining       (96.749 ± 2.714) | Linearprobe    (56.645 ± 1.041) | Linearprobe    (56.238 ± 0.333) | Chaining       (86.195 ± 1.347) |
 
 
-### MM (keyNaming)
+### MM
 
 | xxHash                                | default                                    | unrolledDefault                            | nativeHash                      |
 |---------------------------------------|--------------------------------------------|--------------------------------------------|---------------------------------|
-| RobinHood           (62.892  ± 4.111) | Chaining       (34.516      ±       1.273) | Java's HashMap (34.331      ±       0.560) | Java's HashMap (50.681 ± 3.274) |
-| Java's HashMap      (66.649  ± 6.655) | Java's HashMap (35.500      ±       0.217) | Chaining       (32.873      ±       0.193) | RobinHood      (58.952 ± 1.300) |
-| Linearprobe         (83.803  ± 2.969) | RobinHood      (114763.383  ±     166.797) | RobinHood      (114589.742  ±      83.337) | Linearprobe    (70.191 ± 1.130) |
-| Chaining            (100.416 ± 5.265) | Linearprobe    (1549683.071 ± 1622445.151) | Linearprobe    (1642120.311 ± 1546165.077) | Chaining       (88.288 ± 0.929) |
+| RobinHood           (62.718  ± 1.538) | Chaining       (34.516      ±       1.273) | Chaining       (32.873      ±       0.193) | RobinHood      (46.592 ± 0.482) |
+| Java's HashMap      (66.649  ± 6.655) | Java's HashMap (35.500      ±       0.217) | Java's HashMap (34.331      ±       0.560) | Java's HashMap (50.681 ± 3.274) |
+| Linearprobe         (77.839  ± 1.860) | RobinHood      (116818.565  ±    1747.045) | RobinHood      (116701.295  ±    1742.646) | Linearprobe    (65.593 ± 0.782) |
+| Chaining            (100.416 ± 5.265) | Linearprobe    (1371434.037 ± 1302460.722) | Linearprobe    (1521891.429 ± 1591490.765) | Chaining       (88.288 ± 0.929) |
 
 
-### UUID (keyNaming)
+### UUID
 
 | xxHash                            | default                           | unrolledDefault                   | nativeHash                        |
 |-----------------------------------|-----------------------------------|-----------------------------------|-----------------------------------|
-| RobinHood      (71.194  ±  0.565) | RobinHood      (84.199  ±  1.362) | RobinHood      (87.834  ±  4.914) | Java's HashMap (59.658  ±  2.141) |
-| Java's HashMap (76.812  ±  2.818) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (94.640  ±  3.484) | RobinHood      (60.807  ±  1.081) |
-| Linearprobe    (94.212  ±  1.816) | Linearprobe    (118.914 ±  3.430) | Linearprobe    (119.870 ±  9.814) | Linearprobe    (76.748  ±  0.390) |
+| RobinHood      (68.338 ±   0.629) | RobinHood      (84.143  ±  3.176) | RobinHood      (88.421  ±  5.056) | RobinHood      (55.929  ±  0.159) |
+| Java's HashMap (76.812  ±  2.818) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (59.658  ±  2.141) |
+| Linearprobe    (106.472 ± 20.139) | Linearprobe    (120.989 ±  5.045) | Linearprobe    (125.302 ±  1.280) | Linearprobe    (76.748  ±  0.390) |
 | Chaining       (123.539 ± 20.780) | Chaining       (129.748 ± 13.359) | Chaining       (132.138 ± 10.183) | Chaining       (101.192 ± 24.068) |
+
+
+## Conclusion
+
+As we know that Java's implementation has allocations, so we don't include it in this recommendations for latency-sensitive systems.
+
+For `Number` and `MM` it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap implementation with zero allocations in the long term.
+
+For `UUID` it's recommended to use `nativeHash` hash function with `RobinHood` hashmap implementation with zero allocations in the long term.
+
+Other unknown for this experiment key naming strategies should use `nativeHash` or `xxHash` with `RobinHood`, because these combinations give more stable performance results for random and not only keys. 
+
+Also it's a well-known [issue](https://vanilla-java.github.io/2018/08/15/Looking-at-randomness-and-performance-for-hash-codes.html) that default java's hash function isn't good enough at all.
