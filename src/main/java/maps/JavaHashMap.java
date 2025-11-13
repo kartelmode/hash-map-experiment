@@ -48,11 +48,6 @@ public class JavaHashMap implements Cache {
     }
 
     @Override
-    public long collisionCount() {
-        return 0;
-    }
-
-    @Override
     public int capacity() {
         return 0;
     }

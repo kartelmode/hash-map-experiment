@@ -22,17 +22,12 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
     }
 
     @Override
-    protected void putNewNoSpaceCheck(DataPayload entry) {
-        int hidx = hashIndex(entry.getKey());
-        putEntry(entry, hidx);
-    }
-
-    @Override
     protected void free(int idx) {
         count--;
         entries[idx].setInCachePosition(-1);
         entries[idx] = null;
         probeSeqLength[idx] = 0;
+        int lengthMask = entries.length - 1;
         int nidx = (idx + 1) & lengthMask;
 
         while (isFilled(nidx) && probeSeqLength[nidx] > 0) {
@@ -51,6 +46,7 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
     @Override
     protected void putEntry(DataPayload entry, int hidx) {
         DataPayload tmp;
+        int lengthMask = entries.length - 1;
 
         int currentProbeSeqLength = 0;
         while (isFilled(hidx)) {
@@ -67,7 +63,6 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
             hidx = (hidx + 1) & lengthMask;
             currentProbeSeqLength++;
         }
-        collisions += (currentProbeSeqLength > 0 ? 1 : 0);
         count++;
         entry.setInCachePosition(hidx);
         entries[hidx] = entry;
@@ -77,6 +72,7 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
     @Override
     protected int find(int hidx, AsciiString key) {
         int currentProbeSeqLength = 0;
+        int lengthMask = entries.length - 1;
 
         for (;isFilled(hidx) && currentProbeSeqLength <= probeSeqLength[hidx]; hidx = (hidx + 1) & lengthMask, currentProbeSeqLength++) {
             if (keyEquals(entries[hidx].getKey(), key)) {
@@ -88,19 +84,42 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
 
     @Override
     public boolean putIfEmpty(DataPayload entry) {
-        int hidx = hashIndex(entry.getKey());
-        int idx = find(hidx, entry.getKey());
-
-        if (idx != NULL) {
-            return false;
-        }
-
-        if (count * 100 >= entries.length * loadFactor) {
+        if (count >= threshold) {
             resizeTable(entries.length * 2);
-            hidx = hashIndex(entry.getKey());
         }
 
-        putEntry(entry, hidx);
+        int hidx = hashIndex(entry.getKey());
+        AsciiString key = entry.getKey();
+        int currentProbeSeqLength = 0;
+        int lengthMask = entries.length - 1;
+
+        for (; isFilled(hidx) && currentProbeSeqLength <= probeSeqLength[hidx]; hidx = (hidx + 1) & lengthMask, currentProbeSeqLength++) {
+            if (keyEquals(entries[hidx].getKey(), key)) {
+                return false;
+            }
+        }
+
+        DataPayload tmp;
+        int lengthMask1 = entries.length - 1;
+
+        while (isFilled(hidx)) {
+            if (currentProbeSeqLength > probeSeqLength[hidx]) {
+                entry.setInCachePosition(hidx);
+                tmp = entries[hidx];
+                entries[hidx] = entry;
+                entry = tmp;
+
+                currentProbeSeqLength ^= probeSeqLength[hidx]; // swap values without temp variable
+                probeSeqLength[hidx] ^= currentProbeSeqLength;
+                currentProbeSeqLength ^= probeSeqLength[hidx];
+            }
+            hidx = (hidx + 1) & lengthMask1;
+            currentProbeSeqLength++;
+        }
+        count++;
+        entry.setInCachePosition(hidx);
+        entries[hidx] = entry;
+        probeSeqLength[hidx] = currentProbeSeqLength;
         return true;
     }
 

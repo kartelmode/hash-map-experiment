@@ -280,11 +280,6 @@ public class RawLinearProbingHashMap implements Cache {
     }
 
     @Override
-    public long collisionCount() {
-        return collisions;
-    }
-
-    @Override
     public int capacity() {
         return entries.length;
     }

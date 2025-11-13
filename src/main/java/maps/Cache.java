@@ -8,7 +8,6 @@ public interface Cache {
     DataPayload get(AsciiString key);
     void deactivate(DataPayload entry);
 
-    long collisionCount();
     int capacity();
     int size();
 }

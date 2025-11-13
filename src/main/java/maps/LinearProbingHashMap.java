@@ -7,16 +7,15 @@ import internal.FixedSizeQueue;
 
 public class LinearProbingHashMap implements Cache {
     public static final int MIN_CAPACITY = 16;
-    public static final int DEFAULT_LOAD_FACTOR = 50;
-    protected final int loadFactor;
+    public static final float DEFAULT_LOAD_FACTOR = 0.5f;
     protected static final int NULL = Integer.MIN_VALUE;
     protected final HashCodeComputer hashCodeComputer;
+    protected final float loadFactor;
 
     protected int count = 0;
-    protected long collisions = 0;
 
     protected DataPayload[] entries;
-    protected int lengthMask;
+    protected int threshold;
 
     protected final FixedSizeQueue<DataPayload> inactiveDataQueue; // contains most recent inactive orders
 
@@ -24,7 +23,7 @@ public class LinearProbingHashMap implements Cache {
         this(activeDataCount, maxInactiveDataCount, hashCodeComputer, DEFAULT_LOAD_FACTOR);
     }
 
-    public LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
+    public LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, float loadFactor) {
         if (activeDataCount < MIN_CAPACITY)
             activeDataCount = MIN_CAPACITY;
 
@@ -52,7 +51,7 @@ public class LinearProbingHashMap implements Cache {
 
     protected void allocTable(int cap) {
         entries = new DataPayload[cap];
-        lengthMask = cap - 1;
+        threshold = (int)(cap * loadFactor);
     }
 
     protected void resizeTable(int newSize) {
@@ -64,15 +63,11 @@ public class LinearProbingHashMap implements Cache {
 
         for (int i = 0; i < curLength; i++) {
             if (saveOrders[i] != null) {
-                putNewNoSpaceCheck(saveOrders[i]);
+                int hidx = hashIndex(saveOrders[i].getKey());
+
+                putEntry(saveOrders[i], hidx);
             }
         }
-    }
-
-    protected void putNewNoSpaceCheck(DataPayload entry) {
-        int hidx = hashIndex(entry.getKey());
-
-        putEntry(entry, hidx);
     }
 
     protected final boolean isFilled(int idx) {
@@ -93,6 +88,7 @@ public class LinearProbingHashMap implements Cache {
 
     private void compactChain(int deletedIdx) {
         int curIdx = deletedIdx;
+        int lengthMask = entries.length - 1;
 
         while (true) {
             curIdx = (curIdx + 1) & lengthMask;
@@ -124,8 +120,8 @@ public class LinearProbingHashMap implements Cache {
     }
 
     protected int find(int hidx, AsciiString key) {
-        int attempts = 0;
-        for (; attempts < entries.length && isFilled(hidx); hidx = (hidx + 1) & lengthMask, attempts++) {
+        int lengthMask = entries.length - 1;
+        for (; isFilled(hidx); hidx = (hidx + 1) & lengthMask) {
             if (keyEquals(entries[hidx].getKey(), key)) {
                 return hidx;
             }
@@ -139,19 +135,22 @@ public class LinearProbingHashMap implements Cache {
 
     @Override
     public boolean putIfEmpty(DataPayload entry) {
-        int hidx = hashIndex(entry.getKey());
-        int idx = find(hidx, entry.getKey());
-
-        if (idx != NULL) {
-            return false;
-        }
-
-        if (count * 100 >= entries.length * loadFactor) {
+        if (count >= threshold) {
             resizeTable(entries.length * 2);
-            hidx = hashIndex(entry.getKey());
         }
 
-        putEntry(entry, hidx);
+        int hidx = hashIndex(entry.getKey());
+        AsciiString key = entry.getKey();
+        int lengthMask = entries.length - 1;
+        for (; isFilled(hidx); hidx = (hidx + 1) & lengthMask) {
+            if (keyEquals(entries[hidx].getKey(), key)) {
+                return false;
+            }
+        }
+
+        count++;
+        entries[hidx] = entry;
+        entry.setInCachePosition(hidx);
         return true;
     }
 
@@ -163,12 +162,10 @@ public class LinearProbingHashMap implements Cache {
     }
 
     protected void putEntry(DataPayload entry, int hidx) {
-        int attempts = 0;
-        while (attempts < entries.length && isFilled(hidx)) {
+        int lengthMask = entries.length - 1;
+        while (isFilled(hidx)) {
             hidx = (hidx + 1) & lengthMask;
-            attempts++;
         }
-        collisions += (attempts > 0 ? 1 : 0);
         count++;
         entries[hidx] = entry;
         entry.setInCachePosition(hidx);
@@ -187,11 +184,6 @@ public class LinearProbingHashMap implements Cache {
 
         displaceOldestInactiveOrderIfQueueFull();
         inactiveDataQueue.put(entry);
-    }
-
-    @Override
-    public long collisionCount() {
-        return collisions;
     }
 
     @Override
