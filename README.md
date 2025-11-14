@@ -11,7 +11,15 @@ These naming strategies include
 * something we internally call `mm` - key is constructed using constant prefix followed by base32 sequence number (e.g. "SOURCE13:T3AAA402"),
 * UUID (e.g. "BE3F223A-3E39-443E-AEB8-3932A850C051")
 
-TODO: header, описание хешей, добавить выводы из таблиц
+TODO: описание хешей
+
+## Hash functions
+
+It's necessary to identify several optimal hash functions based on their computational speed and quality, as these parameters directly affect the performance of hash tables. 
+
+You can find sources [here](https://github.com/kartelmode/hash-map-experiment/tree/main/src/main/java/hashing).
+
+### Collisions rate
 
 | Hash                   | number   | mm        | uuid     |
 |------------------------|----------|-----------|----------|
@@ -27,7 +35,12 @@ TODO: header, описание хешей, добавить выводы из т
 
 * - current version of this hashing allocates
 
-## 🧩 Empty Bucket Ratio (smaller is better)
+The table presents the number of collisions for each key generation strategy and each hash function with 10^7 inserted keys. 
+
+It can be observed that all hash functions demonstrate equally effective distribution when applied to random keys (UUID pattern). 
+However, for other patterns, the results are less straightforward – default hash functions and faster variants exhibit a higher number of collisions compared to the other hash functions.
+
+### Empty Bucket Ratio (smaller is better)
 
 | Hash                  | number   | mm       | uuid     |
 | --------------------- | -------- | -------- | -------- |
@@ -41,7 +54,11 @@ TODO: header, описание хешей, добавить выводы из т
 | faster                | 0.992943 | 0.984737 | 0.000044 |
 | vhFaster              | 0.992943 | 0.984737 | 0.000044 |
 
-## ⚖️ Index of Dispersion
+The table above illustrates the ratio of unreachable hash table cells to the total number of elements. A cell is considered reachable if there exists a key for which the value of the hash function, modulo the table size, yields the index of that cell.
+
+Based on these data, the faster and vhFaster hash functions don't access the majority of hash table cells even once, which leads to a significant degradation in performance for any hash table implementation.
+
+### Index of Dispersion
 
 (≈ 1 = good, » 1 = clustering, « 1 = suspicious)
 
@@ -57,8 +74,9 @@ TODO: header, описание хешей, добавить выводы из т
 | faster                | 1539.050781 | 858.425110 | 0.990534 |
 | vhFaster              | 1539.050781 | 858.425110 | 0.990534 |
 
+// TODO:
 
-## 📊 Percentiles {P50, P90, P99, P999}
+### Percentiles {P50, P90, P99, P999}
 
 | Hash                  | number           | mm                | uuid             |
 | --------------------- | ---------------- | ----------------- | ---------------- |
@@ -72,7 +90,17 @@ TODO: header, описание хешей, добавить выводы из т
 | faster                | {0, 0, 0, 2000}  | {0, 0, 288, 1472} | {10, 14, 18, 21} |
 | vhFaster              | {0, 0, 0, 2000}  | {0, 0, 288, 1472} | {10, 14, 18, 21} |
 
+The table presents percentile distributions (likely p50, p75, p90, p99) measuring the number of accesses per hash table cell, which directly indicates hash distribution quality across three key generation strategies.
 
+These findings corroborate the data presented in the [Empty Bucket Ratio](#empty-bucket-ratio-smaller-is-better) table, which demonstrates significantly poorer distribution across hash table cells. Consequently, the performance of hash tables utilizing the `faster` and `vhFaster` hash functions will reach critical levels, despite their low computation time.
+
+### Summary
+
+Given their poor key distribution on the "number" and "mm" generation strategies, the "faster" and "vhFaster" hash functions can be excluded from further consideration in subsequent research.
+
+In contrast, "xxHash," "metroHash," "varHandle," and "nativeHash" consistently demonstrate robust distribution across the entire set of hash table cells, regardless of the key generation strategy employed. Therefore, it is reasonable to select a subset of these functions for more detailed investigation. For example, "xxHash" may be chosen due to its widespread adoption, while "nativeHash" offers the advantage of faster computation compared to the other functions in this group.
+
+The "default" and "unrolledDefault" hash functions exhibit less stable distribution results than those mentioned above. Nevertheless, both merit inclusion in future experiments due to their high computational efficiency.
 
 ## JMH Benchmark
 
