@@ -104,71 +104,69 @@ The "default" and "unrolledDefault" hash functions exhibit less stable distribut
 
 ## JMH Benchmark
 
-```declarative
+| Hash Strategy   | Key Type | Map implementation | Score (ns/op) ± Error                | Notes   |
+|-----------------|----------|--------------------|--------------------------------------|---------|
+| xxHash          | number   | chaining           | 96.749             ± 2.714           |         |
+| xxHash          | number   | linearprobe        | 82.806             ± 2.756           |         |
+| xxHash          | number   | robinhood          | 63.400             ± 0.803           |         |
+| xxHash          | mm       | chaining           | 100.416            ± 5.265           |         |
+| xxHash          | mm       | linearprobe        | 85.518             ± 2.238           |         |
+| xxHash          | mm       | robinhood          | 67.052             ± 2.235           |         |
+| xxHash          | uuid     | chaining           | 123.539            ± 20.780          |         |
+| xxHash          | uuid     | linearprobe        | 96.652             ± 0.763           |         |
+| xxHash          | uuid     | robinhood          | 71.194             ± 0.565           |         |
+| default         | number   | chaining           | 32.476             ± 0.379           |         |
+| default         | number   | linearprobe        | 116.161            ± 0.455           |         |
+| default         | number   | robinhood          | 47.980             ± 0.083           |         |
+| default         | mm       | chaining           | 34.516             ± 1.273           |         |
+| default         | mm       | linearprobe        | 3,706,548,479.653  ± 26,544,201.756  | Outlier |
+| default         | mm       | robinhood          | 114,763.383        ± 166.797         | Outlier |
+| default         | uuid     | chaining           | 129.748            ± 13.359          |         |
+| default         | uuid     | linearprobe        | 119.056            ± 1.212           |         |
+| default         | uuid     | robinhood          | 84.199             ± 1.362           |         |
+| unrolledDefault | number   | chaining           | 31.281             ± 0.813           |         |
+| unrolledDefault | number   | linearprobe        | 110.477            ± 0.811           |         |
+| unrolledDefault | number   | robinhood          | 46.476             ± 0.612           |         |
+| unrolledDefault | mm       | chaining           | 32.873             ± 0.193           |         |
+| unrolledDefault | mm       | linearprobe        | 3,486,178,559.167  ± 169,273,692.885 | Outlier |
+| unrolledDefault | mm       | robinhood          | 114,589.742        ± 83.337          | Outlier |
+| unrolledDefault | uuid     | chaining           | 132.138            ± 10.183          |         |
+| unrolledDefault | uuid     | linearprobe        | 121.661            ± 10.359          |         |
+| unrolledDefault | uuid     | robinhood          | 87.834             ± 4.914           |         |
+| nativeHash      | number   | chaining           | 86.195             ± 1.347           |         |
+| nativeHash      | number   | linearprobe        | 67.745             ± 0.655           |         |
+| nativeHash      | number   | robinhood          | 57.003             ± 0.823           |         |
+| nativeHash      | mm       | chaining           | 88.288             ± 0.929           |         |
+| nativeHash      | mm       | linearprobe        | 73.304             ± 1.138           |         |
+| nativeHash      | mm       | robinhood          | 58.952             ± 1.300           |         |
+| nativeHash      | uuid     | chaining           | 101.192            ± 24.068          |         |
+| nativeHash      | uuid     | linearprobe        | 79.039             ± 1.733           |         |
+| nativeHash      | uuid     | robinhood          | 60.807             ± 1.081           |         |
 
-  (hashStrategy)  (keyNaming)   (mapClass)           Score           Error  Units
-          xxHash       number     chaining          96.749 +-         2.714  ns/op
-          xxHash       number  linearprobe          82.806 +-         2.756  ns/op
-          xxHash       number    robinhood          63.400 +-         0.803  ns/op
-          xxHash           mm     chaining         100.416 +-         5.265  ns/op
-          xxHash           mm  linearprobe          85.518 +-         2.238  ns/op
-          xxHash           mm    robinhood          67.052 +-         2.235  ns/op
-          xxHash         uuid     chaining         123.539 +-        20.780  ns/op
-          xxHash         uuid  linearprobe          96.652 +-         0.763  ns/op
-          xxHash         uuid    robinhood          71.194 +-         0.565  ns/op
-         default       number     chaining          32.476 +-         0.379  ns/op
-         default       number  linearprobe         116.161 +-         0.455  ns/op
-         default       number    robinhood          47.980 +-         0.083  ns/op
-         default           mm     chaining          34.516 +-         1.273  ns/op
-         default           mm  linearprobe  3706548479.653 +-  26544201.756  ns/op <===
-         default           mm    robinhood      114763.383 +-       166.797  ns/op <---
-         default         uuid     chaining         129.748 +-        13.359  ns/op
-         default         uuid  linearprobe         119.056 +-         1.212  ns/op
-         default         uuid    robinhood          84.199 +-         1.362  ns/op
- unrolledDefault       number     chaining          31.281 +-         0.813  ns/op
- unrolledDefault       number  linearprobe         110.477 +-         0.811  ns/op
- unrolledDefault       number    robinhood          46.476 +-         0.612  ns/op
- unrolledDefault           mm     chaining          32.873 +-         0.193  ns/op
- unrolledDefault           mm  linearprobe  3486178559.167 +- 169273692.885  ns/op <===
- unrolledDefault           mm    robinhood      114589.742 +-        83.337  ns/op <---
- unrolledDefault         uuid     chaining         132.138 +-        10.183  ns/op
- unrolledDefault         uuid  linearprobe         121.661 +-        10.359  ns/op
- unrolledDefault         uuid    robinhood          87.834 +-         4.914  ns/op
-      nativeHash       number     chaining          86.195 +-         1.347  ns/op
-      nativeHash       number  linearprobe          67.745 +-         0.655  ns/op
-      nativeHash       number    robinhood          57.003 +-         0.823  ns/op
-      nativeHash           mm     chaining          88.288 +-         0.929  ns/op
-      nativeHash           mm  linearprobe          73.304 +-         1.138  ns/op
-      nativeHash           mm    robinhood          58.952 +-         1.300  ns/op
-      nativeHash         uuid     chaining         101.192 +-        24.068  ns/op
-      nativeHash         uuid  linearprobe          79.039 +-         1.733  ns/op
-      nativeHash         uuid    robinhood          60.807 +-         1.081  ns/op
-```
-Where `<===` and `<---` mark combination of hash implementation that lead to "collapse" of open-addressing linear probing/robin hood implementations.
-Map implementation has to traverse thousands of filled buckets.
+**Notes:**
+- Outlier: combination of hash implementation that lead to "collapse" of open-addressing linear probing/robin hood implementations.
+- All scores are in nanoseconds per operation (ns/op).
 
-This results was performed by using naive compacting chain after deleting the key from the map.
+These results were performed by using naive compacting chain after deleting the key from the linear probing hashmap implementations.
 
 The second version of linear probe implementation uses smarter compacting, where entries from the chain can be placed directly to empty cell that becomes empty after deletion or during compaction. 
 
 Updated benchmark:
 
-```declarative
-
-  (hashStrategy)  (keyNaming)   (mapClass)              Score          Error  Units | Previous Score            Error
-         xxHash       number  linearprobe               79.525 ±       0.454  ns/op |         82.806 +-         2.756  ns/op
-         xxHash           mm  linearprobe               83.803 ±       2.969  ns/op |         85.518 +-         2.238  ns/op
-         xxHash         uuid  linearprobe               94.212 ±       1.816  ns/op |         96.652 +-         0.763  ns/op
-        default       number  linearprobe               63.109 ±       1.282  ns/op |        116.161 +-         0.455  ns/op
-        default           mm  linearprobe          1549683.071 ± 1622445.151  ns/op | 3706548479.653 +-  26544201.756  ns/op
-        default         uuid  linearprobe              118.914 ±       3.430  ns/op |        119.056 +-         1.212  ns/op
-unrolledDefault       number  linearprobe               61.546 ±       0.379  ns/op |        110.477 +-         0.811  ns/op
-unrolledDefault           mm  linearprobe          1642120.311 ± 1546165.077  ns/op | 3486178559.167 +- 169273692.885  ns/op
-unrolledDefault         uuid  linearprobe              119.870 ±       9.814  ns/op |        121.661 +-        10.359  ns/op
-     nativeHash       number  linearprobe               66.201 ±       0.150  ns/op |         67.745 +-         0.655  ns/op
-     nativeHash           mm  linearprobe               70.191 ±       1.130  ns/op |         73.304 +-         1.138  ns/op  
-     nativeHash         uuid  linearprobe               76.748 ±       0.390  ns/op |         79.039 +-         1.733  ns/op
-```
+| Hash Strategy   | Key Type | Score (ns/op) ± Error         | Previous Score (ns/op) ± Error      |
+|-----------------|----------|-------------------------------|-------------------------------------|
+| xxHash          | number   | 79.525        ± 0.454         | 82.806            ± 2.756           |
+| xxHash          | mm       | 83.803        ± 2.969         | 85.518            ± 2.238           |
+| xxHash          | uuid     | 94.212        ± 1.816         | 96.652            ± 0.763           |
+| default         | number   | 63.109        ± 1.282         | 116.161           ± 0.455           |
+| default         | mm       | 1,549,683.071 ± 1,622,445.151 | 3,706,548,479.653 ± 26,544,201.756  |
+| default         | uuid     | 118.914       ± 3.430         | 119.056           ± 1.212           |
+| unrolledDefault | number   | 61.546        ± 0.379         | 110.477           ± 0.811           |
+| unrolledDefault | mm       | 1,642,120.311 ± 1,546,165.077 | 3,486,178,559.167 ± 169,273,692.885 |
+| unrolledDefault | uuid     | 119.870       ± 9.814         | 121.661           ± 10.359          |
+| nativeHash      | number   | 66.201        ± 0.150         | 67.745            ± 0.655           |
+| nativeHash      | mm       | 70.191        ± 1.130         | 73.304            ± 1.138           |
+| nativeHash      | uuid     | 76.748        ± 0.390         | 79.039            ± 1.733           |
 
 Optimisation of compacting chain gives about 5% performance improvement. As shown above, high improvement specifically for cases where elements lays in a large chain, that means about bad hash function for 50% load factor.
 
@@ -176,36 +174,29 @@ Optimisation of compacting chain gives about 5% performance improvement. As show
 
 Then 2 new versions of linear probe were implemented: nativeLinearprobe stores references to the keys and their parameters(address and length), rawLinearprobe stores copies of the keys as byte blocks with fixed length.
 
-```declarative
-Benchmark                          (hashStrategy)  (keyNaming)         (mapClass)      Score     Error      Units
-benchmark                                  xxHash       number        linearprobe     75.254 ±   2.048      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash       number        linearprobe      2.474 ±   0.449       #/op
-benchmark:L1-dcache-loads:u                xxHash       number        linearprobe     60.244 ±   1.548       #/op
-benchmark                                  xxHash       number  nativeLinearprobe    102.774 ±   2.339      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash       number  nativeLinearprobe      5.813 ±   0.542       #/op
-benchmark:L1-dcache-loads:u                xxHash       number  nativeLinearprobe     73.564 ±   1.229       #/op
-benchmark                                  xxHash       number     rawLinearprobe     89.855 ±   1.314      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash       number     rawLinearprobe      3.248 ±   0.099       #/op
-benchmark:L1-dcache-loads:u                xxHash       number     rawLinearprobe     66.344 ±   5.871       #/op
-benchmark                                  xxHash           mm        linearprobe     89.031 ±   2.027      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash           mm        linearprobe      2.663 ±   0.310       #/op
-benchmark:L1-dcache-loads:u                xxHash           mm        linearprobe     63.309 ±   0.381       #/op
-benchmark                                  xxHash           mm  nativeLinearprobe    111.904 ±   3.587      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash           mm  nativeLinearprobe      6.097 ±   0.762       #/op
-benchmark:L1-dcache-loads:u                xxHash           mm  nativeLinearprobe     74.224 ±   3.162       #/op
-benchmark                                  xxHash           mm     rawLinearprobe    107.345 ±   5.653      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash           mm     rawLinearprobe      3.369 ±   0.332       #/op
-benchmark:L1-dcache-loads:u                xxHash           mm     rawLinearprobe     68.218 ±  19.599       #/op
-benchmark                                  xxHash         uuid        linearprobe    113.748 ±   1.164      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash         uuid        linearprobe      2.699 ±   0.148       #/op
-benchmark:L1-dcache-loads:u                xxHash         uuid        linearprobe     66.682 ±   4.502       #/op
-benchmark                                  xxHash         uuid  nativeLinearprobe    126.916 ±   5.668      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash         uuid  nativeLinearprobe      6.111 ±   0.578       #/op
-benchmark:L1-dcache-loads:u                xxHash         uuid  nativeLinearprobe     78.539 ±  11.802       #/op
-benchmark                                  xxHash         uuid     rawLinearprobe    123.257 ±   5.396      ns/op
-benchmark:L1-dcache-load-misses:u          xxHash         uuid     rawLinearprobe      3.453 ±   0.511       #/op
-benchmark:L1-dcache-loads:u                xxHash         uuid     rawLinearprobe     71.522 ±   3.509       #/op
-```
+### number
+
+| Map Class         | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|-------------------|-----------------------|--------------------------------------|--------------------------------|
+| linearprobe       | 75.254  ± 2.048       | 2.474 ± 0.449                        | 60.244 ± 1.548                 |
+| nativeLinearprobe | 102.774 ± 2.339       | 5.813 ± 0.542                        | 73.564 ± 1.229                 |
+| rawLinearprobe    | 89.855  ± 1.314       | 3.248 ± 0.099                        | 66.344 ± 5.871                 |
+
+### mm
+
+| Map Class         | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|-------------------|-----------------------|--------------------------------------|--------------------------------|
+| linearprobe       | 89.031  ± 2.027       | 2.663 ± 0.310                        | 63.309 ± 0.381                 |
+| nativeLinearprobe | 111.904 ± 3.587       | 6.097 ± 0.762                        | 74.224 ± 3.162                 |
+| rawLinearprobe    | 107.345 ± 5.653       | 3.369 ± 0.332                        | 68.218 ± 19.599                |
+
+### uuid
+
+| Map Class         | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|-------------------|-----------------------|--------------------------------------|--------------------------------|
+| linearprobe       | 113.748 ± 1.164       | 2.699 ± 0.148                        | 66.682 ± 4.502                 |
+| nativeLinearprobe | 126.916 ± 5.668       | 6.111 ± 0.578                        | 78.539 ± 11.802                |
+| rawLinearprobe    | 123.257 ± 5.396       | 3.453 ± 0.511                        | 71.522 ± 3.509                 |
 
 The purpose of implementing these 2 maps was to check if avoiding dereferencing gives better performance or not. 
 Here we can see that native linear probe version has ~2 times worse performance than default linear probe. 
@@ -218,56 +209,37 @@ This is acceptable for rawLinearprobe too, because it stores additional array wi
 
 The data below demonstrates the results for hash map using `HashMap` from java.util.collections. For `number` and `mm` key naming strategy it works ideal with default hash function, whenever nativeHash is better for `uuid` naming strategy.
 
-```declarative
-xxHash
-Benchmark                           (keyNaming)     Score     Error      Units
-benchmark                               number     58.471 ±   1.320      ns/op
-benchmark:L1-dcache-load-misses:u       number      2.263 ±   0.210       #/op
-benchmark:L1-dcache-loads:u             number     64.861 ±   5.354       #/op
-benchmark                                   mm     62.892 ±   4.111      ns/op
-benchmark:L1-dcache-load-misses:u           mm      2.343 ±   1.518       #/op
-benchmark:L1-dcache-loads:u                 mm     66.054 ±  24.938       #/op
-benchmark                                 uuid     76.812 ±   2.818      ns/op
-benchmark:L1-dcache-load-misses:u         uuid      2.644 ±   0.482       #/op
-benchmark:L1-dcache-loads:u               uuid     69.869 ±  43.915       #/op
+### xxHash
 
-default
+| Key Type | Score (ns/op) | Error | L1-dcache-load-misses (#/op) | Error | L1-dcache-loads (#/op) | Error |
+|----------|---------------|-------|------------------------------|-------|------------------------|-------|
+| number   | 58.471        | 1.320 | 2.263                        | 0.210 | 64.861                 | 5.354 |
+| mm       | 62.892        | 4.111 | 2.343                        | 1.518 | 66.054                 | 24.938|
+| uuid     | 76.812        | 2.818 | 2.644                        | 0.482 | 69.869                 | 43.915|
 
-Benchmark                           (keyNaming)     Score    Error      Units
-benchmark                               number     22.727 ±  0.283      ns/op
-benchmark:L1-dcache-load-misses:u       number      0.375 ±  0.276       #/op
-benchmark:L1-dcache-loads:u             number     67.625 ± 10.178       #/op
-benchmark                                   mm     35.500 ±  0.217      ns/op
-benchmark:L1-dcache-load-misses:u           mm      1.388 ±  0.556       #/op
-benchmark:L1-dcache-loads:u                 mm     92.779 ±  2.693       #/op
-benchmark                                 uuid     94.640 ±  3.484      ns/op
-benchmark:L1-dcache-load-misses:u         uuid      2.396 ±  0.731       #/op
-benchmark:L1-dcache-loads:u               uuid    100.120 ± 14.689       #/op
+### default
 
-unrolledDefault
-Benchmark                          (keyNaming)      Score     Error      Units
-benchmark                               number     22.059 ±   0.372      ns/op
-benchmark:L1-dcache-load-misses:u       number      0.369 ±   0.180       #/op
-benchmark:L1-dcache-loads:u             number     79.233 ±   5.054       #/op
-benchmark                                   mm     34.331 ±   0.560      ns/op
-benchmark:L1-dcache-load-misses:u           mm      1.397 ±   0.435       #/op
-benchmark:L1-dcache-loads:u                 mm    111.564 ±  22.118       #/op
-benchmark                                 uuid     91.850 ±   6.611      ns/op
-benchmark:L1-dcache-load-misses:u         uuid      2.366 ±   1.034       #/op
-benchmark:L1-dcache-loads:u               uuid    120.489 ±   7.257       #/op
+| Key Type | Score (ns/op) | Error | L1-dcache-load-misses (#/op) | Error | L1-dcache-loads (#/op) | Error |
+|----------|---------------|-------|------------------------------|-------|------------------------|-------|
+| number   | 22.727        | 0.283 | 0.375                        | 0.276 | 67.625                 | 10.178|
+| mm       | 35.500        | 0.217 | 1.388                        | 0.556 | 92.779                 | 2.693 |
+| uuid     | 94.640        | 3.484 | 2.396                        | 0.731 | 100.120                | 14.689|
 
-NativeHash
-Benchmark                          (keyNaming)      Score     Error      Units
-benchmark                               number     43.757 ±   0.999      ns/op
-benchmark:L1-dcache-load-misses:u       number      2.206 ±   0.241       #/op
-benchmark:L1-dcache-loads:u             number     49.692 ±   3.653       #/op
-benchmark                                   mm     50.681 ±   3.274      ns/op
-benchmark:L1-dcache-load-misses:u           mm      2.333 ±   1.438       #/op
-benchmark:L1-dcache-loads:u                 mm     53.991 ±   5.983       #/op
-benchmark                                 uuid     59.658 ±   2.141      ns/op
-benchmark:L1-dcache-load-misses:u         uuid      2.437 ±   0.370       #/op
-benchmark:L1-dcache-loads:u               uuid     59.567 ±   8.855       #/op
-```
+### unrolledDefault
+
+| Key Type | Score (ns/op) | Error | L1-dcache-load-misses (#/op) | Error | L1-dcache-loads (#/op) | Error |
+|----------|---------------|-------|------------------------------|-------|------------------------|-------|
+| number   | 22.059        | 0.372 | 0.369                        | 0.180 | 79.233                 | 5.054 |
+| mm       | 34.331        | 0.560 | 1.397                        | 0.435 | 111.564                | 22.118|
+| uuid     | 91.850        | 6.611 | 2.366                        | 1.034 | 120.489                | 7.257 |
+
+### NativeHash
+
+| Key Type | Score (ns/op) | Error | L1-dcache-load-misses (#/op) | Error | L1-dcache-loads (#/op) | Error |
+|----------|---------------|-------|------------------------------|-------|------------------------|-------|
+| number   | 43.757        | 0.999 | 2.206                        | 0.241 | 49.692                 | 3.653 |
+| mm       | 50.681        | 3.274 | 2.333                        | 1.438 | 53.991                 | 5.983 |
+| uuid     | 59.658        | 2.141 | 2.437                        | 0.370 | 59.567                 | 8.855 |
 
 ### Allocations
 
