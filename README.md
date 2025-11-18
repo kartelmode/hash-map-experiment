@@ -293,46 +293,43 @@ benchmark:gc.time                    uuid    370.000               ms
 From the info above we can see that Java's hashmap allocates data that is unacceptable in our case, because it causes calling garbage collection that is bad for latency in the real life.
 
 // TODO: refactor
-As we know that Java's implementation has allocations, so we don't include it in this recommendations for latency-sensitive systems.
+As we know that Java's implementation has allocations, so we don't recommend to user it in latency-sensitive systems.
 
 ## Leaderboards
 
 // TODO: add plots
 
-The tables below demonstrate statistical leaderboards for every hash function for every key naming strategy. All results were measured on `Amazon EC2 r7iz.xlarge` instance with 128 CPU cores.
-
-// TODO: add ns/op (smaller is better)
-
-// TODO: add top-5 for every strategy
+The tables below demonstrate statistical leaderboards(top-5) for every hash function for every key naming strategy. All results were measured on `Amazon EC2 r7iz.16xlarge` instance with 128 CPU cores.
 
 ### Number
 
-| xxHash                          | default                         | unrolledDefault                 | nativeHash                      |
-|---------------------------------|---------------------------------|---------------------------------|---------------------------------|
-| Java's HashMap (58.471 ± 1.320) | Java's HashMap (22.727 ± 0.283) | Java's HashMap (22.059 ± 0.372) | Java's HashMap (43.757 ± 0.999) |
-| RobinHood      (58.937 ± 2.635) | Chaining       (32.476 ± 0.379) | Chaining       (31.281 ± 0.813) | RobinHood      (46.592 ± 0.482) |
-| Linearprobe    (71.057 ± 0.630) | RobinHood      (47.016 ± 0.371) | RobinHood      (44.937 ± 0.142) | Linearprobe    (57.325 ± 1.668) |
-| Chaining       (96.749 ± 2.714) | Linearprobe    (56.645 ± 1.041) | Linearprobe    (56.238 ± 0.333) | Chaining       (86.195 ± 1.347) |
-
+| Rank | Implementation   | Parameter Set      | ns/op (± error)      |
+|------|------------------|--------------------|----------------------|
+| 1    | Java's HashMap   | unrolledDefault    | 22.059 ± 0.372       |
+| 2    | Java's HashMap   | default            | 22.727 ± 0.283       |
+| 3    | Chaining         | unrolledDefault    | 31.281 ± 0.813       |
+| 4    | Chaining         | default            | 32.476 ± 0.379       |
+| 5    | RobinHood        | unrolledDefault    | 44.937 ± 0.142       |
 
 ### MM
 
-| xxHash                                | default                                    | unrolledDefault                            | nativeHash                      |
-|---------------------------------------|--------------------------------------------|--------------------------------------------|---------------------------------|
-| RobinHood           (62.718  ± 1.538) | Chaining       (34.516      ±       1.273) | Chaining       (32.873      ±       0.193) | RobinHood      (46.592 ± 0.482) |
-| Java's HashMap      (66.649  ± 6.655) | Java's HashMap (35.500      ±       0.217) | Java's HashMap (34.331      ±       0.560) | Java's HashMap (50.681 ± 3.274) |
-| Linearprobe         (77.839  ± 1.860) | RobinHood      (116818.565  ±    1747.045) | RobinHood      (116701.295  ±    1742.646) | Linearprobe    (65.593 ± 0.782) |
-| Chaining            (100.416 ± 5.265) | Linearprobe    (1371434.037 ± 1302460.722) | Linearprobe    (1521891.429 ± 1591490.765) | Chaining       (88.288 ± 0.929) |
-
+| Rank | Implementation | Parameter Set   | ns/op (± error)      |
+|------|----------------|-----------------|----------------------|
+| 1    | Chaining       | unrolledDefault | 32.873 ± 0.193       |
+| 2    | Java's HashMa  | unrolledDefault | 34.331 ± 0.560       |
+| 3    | Chaining       | default         | 34.516 ± 1.273       |
+| 4    | Java's HashMap | default         | 35.500 ± 0.217       |
+| 5    | RobinHood      | nativeHash      | 46.592 ± 0.482       |
 
 ### UUID
 
-| xxHash                            | default                           | unrolledDefault                   | nativeHash                        |
-|-----------------------------------|-----------------------------------|-----------------------------------|-----------------------------------|
-| RobinHood      (68.338 ±   0.629) | RobinHood      (84.143  ±  3.176) | RobinHood      (88.421  ±  5.056) | RobinHood      (55.929  ±  0.159) |
-| Java's HashMap (76.812  ±  2.818) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (94.640  ±  3.484) | Java's HashMap (59.658  ±  2.141) |
-| Linearprobe    (106.472 ± 20.139) | Linearprobe    (120.989 ±  5.045) | Linearprobe    (125.302 ±  1.280) | Linearprobe    (76.748  ±  0.390) |
-| Chaining       (123.539 ± 20.780) | Chaining       (129.748 ± 13.359) | Chaining       (132.138 ± 10.183) | Chaining       (101.192 ± 24.068) |
+| Rank | Implementation   | Parameter Set      | ns/op (± error)      |
+|------|------------------|--------------------|----------------------|
+| 1    | RobinHood        | nativeHash         | 55.929 ± 0.159       |
+| 2    | Java's HashMap   | nativeHash         | 59.658 ± 2.141       |
+| 3    | RobinHood        | xxHash             | 68.338 ± 0.629       |
+| 4    | Linearprobe      | nativeHash         | 76.748 ± 0.390       |
+| 5    | Java's HashMap   | xxHash             | 76.812 ± 2.818       |
 
 
 ## Conclusion
