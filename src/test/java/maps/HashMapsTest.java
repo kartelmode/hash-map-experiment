@@ -352,7 +352,8 @@ class HashMapsTest {
             "1,200", "1,666",
             "2,200", "2,666",
             "4,200", "4,666",
-            "32,200", "32,666"
+            "32,200", "32,666",
+            "256,200", "256,666"
     })
     void fuzzyTest_java(int maxInactiveDataCount, int totalEntries) {
         fuzzyTestImpl(new JavaHashMap(16, maxInactiveDataCount),
