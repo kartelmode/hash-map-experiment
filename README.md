@@ -151,7 +151,7 @@ These results were performed by using naive compacting chain after deleting the 
 
 The second version of linear probe implementation uses smarter compacting, where entries from the chain can be placed directly to empty cell that becomes empty after deletion or during compaction. 
 
-Updated benchmark:
+Updated benchmark results:
 
 | Hash Strategy   | Key Type | Score (ns/op) ± Error         | Previous Score (ns/op) ± Error      |
 |-----------------|----------|-------------------------------|-------------------------------------|
@@ -201,7 +201,7 @@ Then 2 new versions of linear probe were implemented: nativeLinearprobe stores r
 The purpose of implementing these 2 maps was to check if avoiding dereferencing gives better performance or not. 
 Here we can see that native linear probe version has ~2 times worse performance than default linear probe. 
 
-Why so? Native version stores 3 additional arrays, so when we're trying to find value by the key, it accesses these 3 additional arrays and every cache miss in the entry array with high probability gives additional cache misses.
+Why so? Native version stores 3 additional arrays, then when we're trying to find value by the key, it accesses these 3 additional arrays and every cache miss in the entry array with high probability gives additional cache misses.
 
 This is acceptable for rawLinearprobe too, because it stores additional array with proportional length to the capacity of hashmap.
 
@@ -265,7 +265,6 @@ benchmark:gc.time                    uuid    370.000               ms
 From the info above we can see that Java's hashmap allocates data that is unacceptable in our case, because it causes calling garbage collection that is bad for latency in the real life.
 
 // TODO: refactor
-As we know that Java's implementation has allocations, so we don't recommend to user it in latency-sensitive systems.
 
 ## Leaderboards
 
@@ -275,33 +274,33 @@ The tables below demonstrate statistical leaderboards(top-5) for every hash func
 
 ### Number
 
-| Rank | Implementation   | Parameter Set      | ns/op (± error)      |
-|------|------------------|--------------------|----------------------|
-| 1    | Java's HashMap   | unrolledDefault    | 22.059 ± 0.372       |
-| 2    | Java's HashMap   | default            | 22.727 ± 0.283       |
-| 3    | Chaining         | unrolledDefault    | 31.281 ± 0.813       |
-| 4    | Chaining         | default            | 32.476 ± 0.379       |
-| 5    | RobinHood        | unrolledDefault    | 44.937 ± 0.142       |
+| Rank | Implementation   | Parameter Set   | ns/op ± error   |
+|------|------------------|-----------------|-----------------|
+| 1    | Java's HashMap   | unrolledDefault | 22.059 ± 0.372  |
+| 2    | Java's HashMap   | default         | 22.727 ± 0.283  |
+| 3    | Chaining         | unrolledDefault | 31.281 ± 0.813  |
+| 4    | Chaining         | default         | 32.476 ± 0.379  |
+| 5    | RobinHood        | unrolledDefault | 44.937 ± 0.142  |
 
 ### MM
 
-| Rank | Implementation | Parameter Set   | ns/op (± error)      |
-|------|----------------|-----------------|----------------------|
-| 1    | Chaining       | unrolledDefault | 32.873 ± 0.193       |
-| 2    | Java's HashMa  | unrolledDefault | 34.331 ± 0.560       |
-| 3    | Chaining       | default         | 34.516 ± 1.273       |
-| 4    | Java's HashMap | default         | 35.500 ± 0.217       |
-| 5    | RobinHood      | nativeHash      | 46.592 ± 0.482       |
+| Rank | Implementation | Parameter Set   | ns/op ± error   |
+|------|----------------|-----------------|-----------------|
+| 1    | Chaining       | unrolledDefault | 32.873 ± 0.193  |
+| 2    | Java's HashMa  | unrolledDefault | 34.331 ± 0.560  |
+| 3    | Chaining       | default         | 34.516 ± 1.273  |
+| 4    | Java's HashMap | default         | 35.500 ± 0.217  |
+| 5    | RobinHood      | nativeHash      | 46.592 ± 0.482  |
 
 ### UUID
 
-| Rank | Implementation   | Parameter Set      | ns/op (± error)      |
-|------|------------------|--------------------|----------------------|
-| 1    | RobinHood        | nativeHash         | 55.929 ± 0.159       |
-| 2    | Java's HashMap   | nativeHash         | 59.658 ± 2.141       |
-| 3    | RobinHood        | xxHash             | 68.338 ± 0.629       |
-| 4    | Linearprobe      | nativeHash         | 76.748 ± 0.390       |
-| 5    | Java's HashMap   | xxHash             | 76.812 ± 2.818       |
+| Rank | Implementation   | Parameter Set   | ns/op ± error   |
+|------|------------------|-----------------|-----------------|
+| 1    | RobinHood        | nativeHash      | 55.929 ± 0.159  |
+| 2    | Java's HashMap   | nativeHash      | 59.658 ± 2.141  |
+| 3    | RobinHood        | xxHash          | 68.338 ± 0.629  |
+| 4    | Linearprobe      | nativeHash      | 76.748 ± 0.390  |
+| 5    | Java's HashMap   | xxHash          | 76.812 ± 2.818  |
 
 
 ## Conclusion
@@ -312,4 +311,4 @@ For `UUID` it's recommended to use `nativeHash` hash function with `RobinHood` h
 
 Other unknown for this experiment key naming strategies should use `nativeHash` or `xxHash` with `RobinHood`, because these combinations give more stable performance results for random and not only keys. 
 
-Also it's a well-known [issue](https://vanilla-java.github.io/2018/08/15/Looking-at-randomness-and-performance-for-hash-codes.html) that default java's hash function isn't good enough at all.
+Also, it's a well-known [issue](https://vanilla-java.github.io/2018/08/15/Looking-at-randomness-and-performance-for-hash-codes.html) that default java's hash function isn't good enough at all.
