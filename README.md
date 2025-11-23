@@ -1,25 +1,44 @@
 # Hash Map experiments
 
-Little project to research properties of different hashing algorithms when applied to keys typical in OEMS system.
+This project contains a small research effort on how different hashing algorithms and map implementations behave for order-cache workloads in an OEMS system.
 
+As a first step, we evaluate the quality of different hash functions for our order-identifier naming patterns.  
+As a second step, we benchmark the higher-performing hash functions in several Map implementations under access patterns typical for OEMS.
 
-We want to see which hashing strategy produces less collisions on keys naming patterns we typically observe.
+## Step 1: Hashing functions
 
-These naming strategies include
+### Key naming patterns
 
-* simple `number` (e.g. "1761610691"), variable length
-* something we internally call `mm` - key is constructed using constant prefix followed by base32 sequence number (e.g. "SOURCE13:T3AAA402"),
-* UUID (e.g. "BE3F223A-3E39-443E-AEB8-3932A850C051")
+We want to see which hashing strategy yields fewer collisions on the key-naming patterns we typically observe.
 
-TODO: описание хешей
+A general-purpose OEMS usually supports alphanumeric/textual order identifiers. But if you look at how clients actually populate these IDs, a few patterns emerge.
+
+These naming patterns include:
+
+* `number` — INT64 sequence number formatted as text (e.g. `"1761610691"`).
+* `mm` — what we internally call `mm`: a constant prefix followed by a base32 sequence number (e.g. `"SOURCE13:T3AAA402"`).
+* `UUID` — Universally Unique Identifier (e.g. `"BE3F223A-3E39-443E-AEB8-3932A850C051"`).
+
+The full spectrum of naming patterns is wider, but these three are representative enough for evaluating hash quality.
+
+One important aspect: for the first two patterns, consecutive order identifiers differ only in the last few bytes. UUIDs, on the other hand, tend to differ across a wider range of hex digits and are already naturally well-distributed.
+
+**NOTE:** In this project we use only ASCII textual identifiers.
 
 ## Hash functions
 
-It's necessary to identify several optimal hash functions based on their computational speed and quality, as these parameters directly affect the performance of hash tables. 
+The goal is to identify a few optimal hash functions based on both computational speed and hash quality, since these parameters directly affect overall hash-table performance.
 
-You can find sources [here](https://github.com/kartelmode/hash-map-experiment/tree/main/src/main/java/hashing).
+
+* **default** - Java default hash function
+* **xxHash** - XXHash (see [this](https://xxhash.com/)) - copied from openhft? Preserve authorship if so TODO
+* TBD - TODO
+
 
 ### Collisions rate
+
+The table below shows the number of collisions for each key-generation pattern and each hash function, based on inserting \(10^7\) keys.
+
 
 | Hash                   | number   | mm        | uuid     |
 |------------------------|----------|-----------|----------|
@@ -32,15 +51,16 @@ You can find sources [here](https://github.com/kartelmode/hash-map-experiment/tr
 | nativeHash             | 13039401 | 13076831  | 13048408 |
 | faster                 | 33504432 | 33503224  | 13052028 |
 | vhFaster               | 33504432 | 33503224  | 13052028 |
+\* **Note:** The current version of this hash allocates short-lived objects — a hard NO for a Java-based OEMS.
 
-* - current version of this hashing allocates
-
-The table presents the number of collisions for each key generation strategy and each hash function with 10^7 inserted keys. 
-
-It can be observed that all hash functions demonstrate equally effective distribution when applied to random keys (UUID pattern). 
-However, for other patterns, the results are less straightforward – default hash functions and faster variants exhibit a higher number of collisions compared to the other hash functions.
+All hash functions produce a similarly good distribution for random keys (UUID pattern).  
+For the other patterns, the picture is less clean: the default Java hash and the “faster” variants show noticeably higher collision counts compared to the stronger hash implementations.
+er variants exhibit a higher number of collisions compared to the other hash functions.
 
 ### Empty Bucket Ratio (smaller is better)
+
+The table below shows the ratio of unreachable hash-table cells to the total number of elements.  
+A cell is considered *reachable* if there exists at least one key for which the hash value, modulo the table size, maps to that cell.
 
 | Hash                  | number   | mm       | uuid     |
 | --------------------- | -------- | -------- | -------- |
@@ -54,9 +74,8 @@ However, for other patterns, the results are less straightforward – default ha
 | faster                | 0.992943 | 0.984737 | 0.000044 |
 | vhFaster              | 0.992943 | 0.984737 | 0.000044 |
 
-The table above illustrates the ratio of unreachable hash table cells to the total number of elements. A cell is considered reachable if there exists a key for which the value of the hash function, modulo the table size, yields the index of that cell.
-
-Based on these data, the faster and vhFaster hash functions don't access the majority of hash table cells even once, which leads to a significant degradation in performance for any hash table implementation.
+Based on these data, the **faster** and **vhFaster** hash functions fail to touch the majority of hash-table cells even once.  
+This implies a severely skewed distribution and will lead to noticeable performance degradation in any hash-table implementation.
 
 ### Index of Dispersion
 
@@ -74,9 +93,15 @@ Based on these data, the faster and vhFaster hash functions don't access the maj
 | faster                | 1539.050781 | 858.425110 | 0.990534 |
 | vhFaster              | 1539.050781 | 858.425110 | 0.990534 |
 
-// TODO:
+Once again, UUID keys produce good hash distribution no matter which function is used.  
+And once again, **faster** and **vhFaster** show very significant clustering.  
+Interestingly, the **default**-hash–based implementations also show some degree of clustering.
 
 ### Percentiles {P50, P90, P99, P999}
+
+The table below shows percentile distributions (p50, p75, p90, p99) of how many times each hash-table cell was hit.  
+This gives a direct view of hash distribution quality for our three key naming patterns.
+
 
 | Hash                  | number           | mm                | uuid             |
 | --------------------- | ---------------- | ----------------- | ---------------- |
@@ -90,17 +115,17 @@ Based on these data, the faster and vhFaster hash functions don't access the maj
 | faster                | {0, 0, 0, 2000}  | {0, 0, 288, 1472} | {10, 14, 18, 21} |
 | vhFaster              | {0, 0, 0, 2000}  | {0, 0, 288, 1472} | {10, 14, 18, 21} |
 
-The table presents percentile distributions (likely p50, p75, p90, p99) measuring the number of accesses per hash table cell, which directly indicates hash distribution quality across three key generation strategies.
+Yet another confirmation that the `faster` hash functions have poor distribution.
 
-These findings corroborate the data presented in the [Empty Bucket Ratio](#empty-bucket-ratio-smaller-is-better) table, which demonstrates significantly poorer distribution across hash table cells. Consequently, the performance of hash tables utilizing the `faster` and `vhFaster` hash functions will reach critical levels, despite their low computation time.
+TODO: What we completely miss is op/sec JMH test so that we can understand trade off between has quality and execution cost. 
 
 ### Summary
 
-Given their poor key distribution on the "number" and "mm" generation strategies, the "faster" and "vhFaster" hash functions can be excluded from further consideration in subsequent research.
+Given their poor key distribution on the "number" and "mm" key patterns, the `faster` and `vhFaster` hash functions can be dropped from further research.
 
-In contrast, "xxHash," "metroHash," "varHandle," and "nativeHash" consistently demonstrate robust distribution across the entire set of hash table cells, regardless of the key generation strategy employed. Therefore, it is reasonable to select a subset of these functions for more detailed investigation. For example, "xxHash" may be chosen due to its widespread adoption, while "nativeHash" offers the advantage of faster computation compared to the other functions in this group.
+In contrast, `xxHash`, `metroHash`, `varHandle`, and `nativeHash` show consistently solid distribution across all hash-table cells, regardless of key pattern. It makes sense to take a subset of these for deeper testing. For example, `xxHash` is widely used, while `nativeHash` is noticeably faster to compute.
 
-The "default" and "unrolledDefault" hash functions exhibit less stable distribution results than those mentioned above. Nevertheless, both merit inclusion in future experiments due to their high computational efficiency.
+The `default` and `unrolledDefault` hash functions show less stable distribution than the group above, but they are still worth including in later experiments due to their speed.
 
 ## JMH Benchmark
 
