@@ -1,41 +1,46 @@
 # Hash Map experiments
 
-This project contains a small research effort on how different hashing algorithms and map implementations behave for order-cache workloads in an OEMS system.
+This project contains a small research effort on how different hashing algorithms and map implementations behave under order-cache workloads in an OEMS system.
 
-As a first step, we evaluate the quality of different hash functions for our order-identifier naming patterns.  
-As a second step, we benchmark the higher-performing hash functions in several Map implementations under access patterns typical for OEMS.
+First, we evaluate the distribution quality of several hash functions using our typical order-identifier naming patterns.  
 
-## Step 1: Hashing functions
+Next, we benchmark the better-performing hash functions across multiple map implementations under access patterns representative of real OEMS workloads.
 
-### Key naming patterns
+## Step 1: Hashing Functions
 
-We want to see which hashing strategy yields fewer collisions on the key-naming patterns we typically observe.
+### Key Naming Patterns
 
-A general-purpose OEMS usually supports alphanumeric/textual order identifiers. But if you look at how clients actually populate these IDs, a few patterns emerge.
+We want to evaluate which hashing strategies produce fewer collisions on key patterns commonly used in OEMS order identifiers.
 
-These naming patterns include:
+While OEMS systems allow arbitrary alphanumeric/textual order IDs, real-world usage tends to cluster around a few predictable formats:
 
-* `number` — INT64 sequence number formatted as text (e.g. `"1761610691"`).
-* `mm` — what we internally call `mm`: a constant prefix followed by a base32 sequence number (e.g. `"SOURCE13:T3AAA402"`).
-* `UUID` — Universally Unique Identifier (e.g. `"BE3F223A-3E39-443E-AEB8-3932A850C051"`).
+* **`number`** — an `INT64` sequence number formatted as text  
+  Example: `"1761610691"`
+* **`mm`** — our internal “mm” style: a constant prefix plus a base32 sequence number  
+  Example: `"SOURCE13:T3AAA402"`
+* **`UUID`** — a standard UUID  
+  Example: `"BE3F223A-3E39-443E-AEB8-3932A850C051"`
 
-The full spectrum of naming patterns is wider, but these three are representative enough for evaluating hash quality.
+The full set of naming styles is broader, but these three cover most practical cases and are representative enough to evaluate hash distribution.
 
-One important aspect: for the first two patterns, consecutive order identifiers differ only in the last few bytes. UUIDs, on the other hand, tend to differ across a wider range of hex digits and are already naturally well-distributed.
+A key detail: in the first two patterns, consecutive identifiers differ only in the last few bytes. UUIDs differ more uniformly across the entire string and are naturally better distributed.
 
-**NOTE:** In this project we use only ASCII textual identifiers.
+**NOTE:** This project uses ASCII textual identifiers only.
 
-## Hash functions
+### Hash Functions
 
-The goal is to identify a few optimal hash functions based on both computational speed and hash quality, since these parameters directly affect overall hash-table performance.
-
+Our goal is to identify a small set of hash functions that balance computational speed and distribution quality, since both factors directly impact overall hash-table performance.
 
 * **default** - Java default hash function
-* **xxHash** - XXHash (see [this](https://xxhash.com/)) - copied from openhft? Preserve authorship if so TODO
-* TBD - TODO
+* **unrolledDefault** - a variation of default hasher where we process 4 bytes per loop iteration
+* **xxHash** - XXHash (see [this](https://xxhash.com/)) - copied from openhft? TODO: Preserve authorship
+* **metro**
+* **faster** - faster version of default hasher (traverses left side of the key as array of INT32 and INT16 before handling what remains as byte)
+* **vhFaster** - a variation of faster hash that uses VarHandlers (Java 17+) rather than Unsafe.
 
+### Benchmarking
 
-### Collisions rate
+#### Collision Rate
 
 The table below shows the number of collisions for each key-generation pattern and each hash function, based on inserting \(10^7\) keys.
 
@@ -51,15 +56,15 @@ The table below shows the number of collisions for each key-generation pattern a
 | nativeHash             | 13039401 | 13076831  | 13048408 |
 | faster                 | 33504432 | 33503224  | 13052028 |
 | vhFaster               | 33504432 | 33503224  | 13052028 |
-\* **Note:** The current version of this hash allocates short-lived objects — a hard NO for a Java-based OEMS.
 
-All hash functions produce a similarly good distribution for random keys (UUID pattern).  
-For the other patterns, the picture is less clean: the default Java hash and the “faster” variants show noticeably higher collision counts compared to the stronger hash implementations.
-er variants exhibit a higher number of collisions compared to the other hash functions.
+\* **Note:** This hash implementation currently allocates short-lived objects — a hard NO for a Java-based OEMS.
 
-### Empty Bucket Ratio (smaller is better)
+All hash functions provide similarly good distribution for random keys (UUID pattern).  
+For the other patterns, results vary more: the default Java hash and the “faster” variants show noticeably higher collision counts compared to the stronger hash functions.
 
-The table below shows the ratio of unreachable hash-table cells to the total number of elements.  
+#### Empty (Unreachable) Bucket Ratio 
+
+The table below shows the ratio of unreachable hash-table cells to the total number of elements (smaller is better).  
 A cell is considered *reachable* if there exists at least one key for which the hash value, modulo the table size, maps to that cell.
 
 | Hash                  | number   | mm       | uuid     |
@@ -74,12 +79,12 @@ A cell is considered *reachable* if there exists at least one key for which the 
 | faster                | 0.992943 | 0.984737 | 0.000044 |
 | vhFaster              | 0.992943 | 0.984737 | 0.000044 |
 
-Based on these data, the **faster** and **vhFaster** hash functions fail to touch the majority of hash-table cells even once.  
+Based on these data, the **faster** hash functions fail to touch the majority of hash-table cells even once.  
 This implies a severely skewed distribution and will lead to noticeable performance degradation in any hash-table implementation.
 
-### Index of Dispersion
+#### Index of Dispersion
 
-(≈ 1 = good, » 1 = clustering, « 1 = suspicious)
+The following table shows Index of Dispersion (IOD). Good hash functions will have their IOD close to 1.0. IOD greater than 1 signifies clustering of results. 
 
 | Hash                  | number      | mm         | uuid     |
 | --------------------- | ----------- | ---------- | -------- |
@@ -94,10 +99,10 @@ This implies a severely skewed distribution and will lead to noticeable performa
 | vhFaster              | 1539.050781 | 858.425110 | 0.990534 |
 
 Once again, UUID keys produce good hash distribution no matter which function is used.  
-And once again, **faster** and **vhFaster** show very significant clustering.  
+And once again, **faster** hashes show very significant clustering.  
 Interestingly, the **default**-hash–based implementations also show some degree of clustering.
 
-### Percentiles {P50, P90, P99, P999}
+#### Distribution Percentiles {P50, P90, P99, P999}
 
 The table below shows percentile distributions (p50, p75, p90, p99) of how many times each hash-table cell was hit.  
 This gives a direct view of hash distribution quality for our three key naming patterns.
@@ -127,7 +132,57 @@ In contrast, `xxHash`, `metroHash`, `varHandle`, and `nativeHash` show consisten
 
 The `default` and `unrolledDefault` hash functions show less stable distribution than the group above, but they are still worth including in later experiments due to their speed.
 
-## JMH Benchmark
+## Step 2: Comparing Map implementations
+
+Next, we evaluate different Map implementations for the OEMS order-cache use case.
+
+### What is specific about this use case?
+
+We focus on a market-maker scenario where the system constantly updates prices of resting orders.  
+Each price update triggers an order-replace request to the market, and every replace uses a new order ID.  
+We assume the market acknowledges each request. Each acknowledgement touches two IDs:  
+it confirms the new one as active and deactivates the old one.
+
+Under this load, cache **writes** happen almost as often as **reads**.  
+A typical ratio might be one trade for every ~1000 price adjustments.
+
+The cache must track all active orders plus a configurable window of recently inactive ones:
+
+```java
+public interface Cache {
+    boolean putIfEmpty(DataPayload entry);
+    DataPayload get(AsciiString key);
+    void deactivate(DataPayload entry);
+    int size();
+}
+```
+
+For benchmark purposes, we test each Map implementation with 1 million entries (active + recent).
+The Map also maintains a FIFO list of up to 4096 deactivated orders.
+This is why the cache interface has no .remove()—deactivated orders are pushed into a FIFO area and stay there until they naturally expire.
+
+
+### JMH Benchmark
+
+As mentioned, the workload is a 50/50 mix of reads and writes:
+
+```java
+    @Benchmark
+    @OperationsPerInvocation(4)
+    public void benchmark() {
+        findOldest();   // GET
+        findExpunged(); // GET (miss)
+        removeOldest(); // REMOVE
+        addNewest();    // PUT
+    }
+```
+
+The `removeOldest()` operation corresponds to deactivating the oldest active order.
+
+JMH results are shown below.
+
+All tests were run on a large Amazon EC2 R7 instance with plenty of spare CPU capacity. 
+Exact hardware details matter less here—we care mainly about relative performance, not absolute numbers.
 
 | Hash Strategy   | Key Type | Map implementation | Score (ns/op) ± Error                | Notes   |
 |-----------------|----------|--------------------|--------------------------------------|---------|
@@ -295,7 +350,7 @@ From the info above we can see that Java's hashmap allocates data that is unacce
 
 // TODO: add plots
 
-The tables below demonstrate statistical leaderboards(top-5) for every hash function for every key naming strategy. All results were measured on `Amazon EC2 r7iz.16xlarge` instance with 128 CPU cores.
+The tables below demonstrate statistical leaderboards(top-5) for every hash function for every key naming strategy. 
 
 ### Number
 
@@ -330,10 +385,9 @@ The tables below demonstrate statistical leaderboards(top-5) for every hash func
 
 ## Conclusion
 
-For `Number` and `MM` it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap implementation that is zero allocating in the long term.
+Different map key naming strategies call for different hash functions. 
 
-For `UUID` it's recommended to use `nativeHash` hash function with `RobinHood` hashmap implementation that is zero allocating in the long term.
+* For `Number` and `MM` naming strategies it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap.
+* For `UUID` key naming it's recommended to use `nativeHash` hash function with `RobinHood` hashmap.
+* If we don't know our key naming pattern it is recommended to use `nativeHash` or `xxHash` hash functions with `RobinHood` Map implementation.
 
-Other unknown for this experiment key naming strategies should use `nativeHash` or `xxHash` with `RobinHood`, because these combinations give more stable performance results for random and not only keys. 
-
-Also, it's a well-known [issue](https://vanilla-java.github.io/2018/08/15/Looking-at-randomness-and-performance-for-hash-codes.html) that default java's hash function isn't good enough at all.
