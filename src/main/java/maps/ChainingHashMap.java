@@ -21,8 +21,6 @@ public final class ChainingHashMap implements Cache {
 
     private DataPayload[]     entries;
 
-    private long collisions = 0;
-
     private final FixedSizeQueue<DataPayload> inactiveDataQueue;
 
     public ChainingHashMap(int initialActiveDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer) {
@@ -103,7 +101,6 @@ public final class ChainingHashMap implements Cache {
 
         if (oldChainHeadIdx != NULL) {
             prev[oldChainHeadIdx] = newChainHeadIdx;
-            collisions++;
         }
 
         prev[newChainHeadIdx] = -hidx - 1;
