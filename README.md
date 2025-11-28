@@ -122,7 +122,22 @@ This gives a direct view of hash distribution quality for our three key naming p
 
 Yet another confirmation that the `faster` hash functions have poor distribution.
 
-TODO: What we completely miss is op/sec JMH test so that we can understand trade off between has quality and execution cost. 
+#### Computation cost
+
+The table below shows computation cost of each hash function. The average length of strings is 16 in our internal projects. So cost is measured for such length.
+
+| Rank | Implementation  | Score (ns/op) ± Error |
+|------|-----------------|------------------------|
+| 1    | vhFaster        | 2.781 ± 0.001          |
+| 2    | faster          | 3.056 ± 0.038          |
+| 3    | nativeHash      | 3.158 ± 0.007          |
+| 4    | metroHash       | 4.488 ± 0.001          |
+| 5    | xxHash          | 5.700 ± 0.254          |
+| 6    | varHandle       | 7.744 ± 0.001          |
+| 7    | unrolledDefault | 8.039 ± 0.003          |
+| 8    | default         | 8.304 ± 0.003          |
+
+TODO: add description why slowest hash function gives better performance in hashmap benchmark.  
 
 ### Summary
 
