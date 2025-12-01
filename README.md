@@ -332,11 +332,7 @@ benchmark:gc.time                    uuid    370.000               ms
 
 From the info above we can see that Java's hashmap allocates data that is unacceptable in our case, because it causes calling garbage collection that is bad for latency in the real life.
 
-// TODO: refactor
-
 ## Leaderboards
-
-// TODO: add plots
 
 The tables below demonstrate statistical leaderboards(top-5) for every hash function for every key naming strategy. 
 
@@ -376,6 +372,5 @@ The tables below demonstrate statistical leaderboards(top-5) for every hash func
 Different map key naming strategies call for different hash functions. 
 
 * For `Number` and `MM` naming strategies it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap.
-* For `UUID` key naming it's recommended to use `nativeHash` hash function with `RobinHood` hashmap.
-* If we don't know our key naming pattern it is recommended to use `nativeHash` or `xxHash` hash functions with `RobinHood` Map implementation.
+* For `UUID` and other key naming strategies it's recommended to use `nativeHash` hash function with `RobinHood` hashmap.
 
