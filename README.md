@@ -260,7 +260,7 @@ Then 2 new versions of linear probe were implemented: nativeLinearprobe stores r
 | rawLinearprobe    | 123.257 ± 5.396       | 3.453 ± 0.511                        | 71.522 ± 3.509                 |
 
 The purpose of implementing these 2 maps was to check if avoiding dereferencing gives better performance or not. 
-Here we can see that native linear probe version has ~2 times worse performance than default linear probe. 
+Here we can see that native linear probe version has worse performance than default linear probe. 
 
 Why so? Native version stores 3 additional arrays, then when we're trying to find value by the key, it accesses these 3 additional arrays and every cache miss in the entry array with high probability gives additional cache misses.
 
@@ -268,7 +268,7 @@ This is acceptable for rawLinearprobe too, because it stores additional array wi
 
 ## java.util.collections.HashMap
 
-The data below demonstrates the results for hash map using `HashMap` from java.util.collections. For `number` and `mm` key naming strategy it works ideal with default hash function, whenever nativeHash is better for `uuid` naming strategy.
+The data below demonstrates the results for hash map using `HashMap` from java.util.collections. For all key naming strategy it works ideal with default hash function.
 
 ### xxHash
 
