@@ -199,44 +199,37 @@ JMH results are shown below.
 All tests were run on a large Amazon EC2 R7 instance with plenty of spare CPU capacity. 
 Exact hardware details matter less here—we care mainly about relative performance, not absolute numbers.
 
-| Hash Strategy   | Key Type | Map implementation | Score (ns/op) ± Error |
-|-----------------|----------|--------------------|-----------------------|
-| xxHash          | number   | chaining           | 81.893  ± 1.679       |
-| xxHash          | number   | linearprobe        | 70.930  ± 1.275       |
-| xxHash          | number   | robinhood          | 57.247  ± 0.729       |
-| xxHash          | mm       | chaining           | 100.128 ± 2.560       |
-| xxHash          | mm       | linearprobe        | 88.850  ± 3.860       |
-| xxHash          | mm       | robinhood          | 65.882  ± 2.515       |
-| xxHash          | uuid     | chaining           | 144.904 ± 5.118       |
-| xxHash          | uuid     | linearprobe        | 136.992 ± 0.601       |
-| xxHash          | uuid     | robinhood          | 104.501 ± 1.260       |
-| default         | number   | chaining           | 28.362  ± 0.537       |
-| default         | number   | linearprobe        | 55.265  ± 1.708       |
-| default         | number   | robinhood          | 44.832  ± 0.513       |
-| default         | mm       | chaining           | 36.171  ± 0.262       |
-| default         | mm       | linearprobe        | 78.265  ± 0.771       |
-| default         | mm       | robinhood          | 49.117  ± 0.141       |
-| default         | uuid     | chaining           | 156.116 ± 1.215       |
-| default         | uuid     | linearprobe        | 161.020 ± 6.575       |
-| default         | uuid     | robinhood          | 112.858 ± 2.041       |
-| unrolledDefault | number   | chaining           | 28.147  ± 1.180       |
-| unrolledDefault | number   | linearprobe        | 55.430  ± 0.567       |
-| unrolledDefault | number   | robinhood          | 42.736  ± 0.171       |
-| unrolledDefault | mm       | chaining           | 34.953  ± 0.194       |
-| unrolledDefault | mm       | linearprobe        | 74.320  ± 0.447       |
-| unrolledDefault | mm       | robinhood          | 48.790  ± 2.885       |
-| unrolledDefault | uuid     | chaining           | 142.156 ± 1.246       |
-| unrolledDefault | uuid     | linearprobe        | 151.103 ± 3.590       |
-| unrolledDefault | uuid     | robinhood          | 107.175 ± 3.973       |
-| nativeHash      | number   | chaining           | 73.518  ± 0.940       |
-| nativeHash      | number   | linearprobe        | 59.066  ± 0.831       |
-| nativeHash      | number   | robinhood          | 49.031  ± 0.461       |
-| nativeHash      | mm       | chaining           | 88.947  ± 0.869       |
-| nativeHash      | mm       | linearprobe        | 74.744  ± 1.138       |
-| nativeHash      | mm       | robinhood          | 56.419  ± 1.323       |
-| nativeHash      | uuid     | chaining           | 137.067 ± 5.240       |
-| nativeHash      | uuid     | linearprobe        | 134.238 ± 3.451       |
-| nativeHash      | uuid     | robinhood          | 95.075  ± 1.147       |
+#### xxHash
+
+| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|----------|------------------|---------------------|-------------------|
+| number   | 81.893 ± 1.679   | 70.930 ± 1.275      | 57.247 ± 0.729    |
+| mm       | 100.128 ± 2.560  | 88.850 ± 3.860      | 65.882 ± 2.515    |
+| uuid     | 144.904 ± 5.118  | 136.992 ± 0.601     | 104.501 ± 1.260   |
+
+#### default
+
+| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|----------|------------------|---------------------|-------------------|
+| number   | 28.362 ± 0.537   | 55.265 ± 1.708      | 44.832 ± 0.513    |
+| mm       | 36.171 ± 0.262   | 78.265 ± 0.771      | 49.117 ± 0.141    |
+| uuid     | 156.116 ± 1.215  | 161.020 ± 6.575     | 112.858 ± 2.041   |
+
+#### unrolledDefault
+
+| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|----------|------------------|---------------------|-------------------|
+| number   | 28.147 ± 1.180   | 55.430 ± 0.567      | 42.736 ± 0.171    |
+| mm       | 34.953 ± 0.194   | 74.320 ± 0.447      | 48.790 ± 2.885    |
+| uuid     | 142.156 ± 1.246  | 151.103 ± 3.590     | 107.175 ± 3.973   |
+
+#### nativeHash
+
+| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|----------|------------------|---------------------|-------------------|
+| number   | 73.518 ± 0.940   | 59.066 ± 0.831      | 49.031 ± 0.461    |
+| mm       | 88.947 ± 0.869   | 74.744 ± 1.138      | 56.419 ± 1.323    |
+| uuid     | 137.067 ± 5.240  | 134.238 ± 3.451     | 95.075 ± 1.147    |
 
 ## Experiments with storing keys
 
