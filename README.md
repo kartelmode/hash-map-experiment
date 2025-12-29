@@ -35,6 +35,7 @@ Our goal is to identify a small set of hash functions that balance computational
 * **unrolledDefault** - a variation of default hasher where a loop is unrolled (see technic [here](https://en.wikipedia.org/wiki/Loop_unrolling))
 * **xxHash** - XXHash (see [this](https://xxhash.com/)) - copied from OpenHFT's [repository](https://github.com/OpenHFT/Zero-Allocation-Hashing/blob/ea/src/main/java/net/openhft/hashing/XxHash.java)
 * **metro** - MetroHash (see [this](https://www.jandrewrogers.com/2015/05/27/metrohash/)) - copied from OpenHFT's [repository](https://github.com/OpenHFT/Zero-Allocation-Hashing/blob/ea/src/main/java/net/openhft/hashing/MetroHash.java)
+* **nativeHash** - Native Hash (see [this](https://vanilla-java.github.io/2018/08/15/Looking-at-randomness-and-performance-for-hash-codes.html))
 * **faster** - faster version of default hasher (traverses left side of the key as array of INT32 and INT16 before handling what remains as byte)
 * **vhFaster** - a variation of faster hash that uses VarHandlers (Java 17+) rather than Unsafe.
 
