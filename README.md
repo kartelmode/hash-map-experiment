@@ -16,7 +16,7 @@ While OEMS systems allow arbitrary alphanumeric/textual order IDs, real-world us
 
 * **`number`** — an `INT64` sequence number formatted as text  
   Example: `"1761610691"`
-* **`mm`** — our internal “mm” style: a constant prefix plus a base32 sequence number  
+* **`fixed_prefix`** — our internal style: a constant prefix plus a base32 sequence number  
   Example: `"SOURCE13:T3AAA402"`
 * **`UUID`** — a standard UUID  
   Example: `"BE3F223A-3E39-443E-AEB8-3932A850C051"`
@@ -46,17 +46,17 @@ Our goal is to identify a small set of hash functions that balance computational
 The table below shows the number of collisions for each key-generation pattern and each hash function, based on inserting \(10^7\) keys.
 
 
-| Hash                   | number   | mm        | uuid     |
-|------------------------|----------|-----------|----------|
-| varHandle              | 13047618 | 13050294  | 13051122 |
-| xxHash                 | 13052140 | 13054964  | 13052276 |
-| default                | 16611402 | 19842334  | 13050206 |
-| metroHash              | 13053294 | 13051070  | 13051639 |
-| unrolledDefault        | 16611402 | 19842334  | 13050206 |
-| vectorizedDefaultHash* | 13265343 | 19842334  | 13050653 |
-| nativeHash             | 13039401 | 13076831  | 13048408 |
-| faster                 | 33504432 | 33503224  | 13052028 |
-| vhFaster               | 33504432 | 33503224  | 13052028 |
+| Hash                   | number   | fixed_prefix | uuid     |
+|------------------------|----------|--------------|----------|
+| varHandle              | 13047618 | 13050294     | 13051122 |
+| xxHash                 | 13052140 | 13054964     | 13052276 |
+| default                | 16611402 | 19842334     | 13050206 |
+| metroHash              | 13053294 | 13051070     | 13051639 |
+| unrolledDefault        | 16611402 | 19842334     | 13050206 |
+| vectorizedDefaultHash* | 13265343 | 19842334     | 13050653 |
+| nativeHash             | 13039401 | 13076831     | 13048408 |
+| faster                 | 33504432 | 33503224     | 13052028 |
+| vhFaster               | 33504432 | 33503224     | 13052028 |
 
 \* **Note:** This hash implementation currently allocates short-lived objects — a hard NO for a Java-based OEMS.
 
@@ -68,17 +68,17 @@ For the other patterns, results vary more: the default Java hash and the “fast
 The table below shows the ratio of unreachable hash-table cells to the total number of elements (smaller is better).  
 A cell is considered *reachable* if there exists at least one key for which the hash value, modulo the table size, maps to that cell.
 
-| Hash                  | number   | mm       | uuid     |
-| --------------------- | -------- | -------- | -------- |
-| varHandle             | 0.000051 | 0.000047 | 0.000048 |
-| xxHash                | 0.000044 | 0.000041 | 0.000051 |
-| default               | 0.002269 | 0.004358 | 0.000043 |
-| metroHash             | 0.000040 | 0.000046 | 0.000044 |
-| unrolledDefault       | 0.002269 | 0.004358 | 0.000043 |
-| vectorizedDefaultHash | 0.001272 | 0.004358 | 0.000047 |
-| nativeHash            | 0.000045 | 0.000054 | 0.000038 |
-| faster                | 0.992943 | 0.984737 | 0.000044 |
-| vhFaster              | 0.992943 | 0.984737 | 0.000044 |
+| Hash                  | number   | fixed_prefix | uuid     |
+| --------------------- | -------- |--------------| -------- |
+| varHandle             | 0.000051 | 0.000047     | 0.000048 |
+| xxHash                | 0.000044 | 0.000041     | 0.000051 |
+| default               | 0.002269 | 0.004358     | 0.000043 |
+| metroHash             | 0.000040 | 0.000046     | 0.000044 |
+| unrolledDefault       | 0.002269 | 0.004358     | 0.000043 |
+| vectorizedDefaultHash | 0.001272 | 0.004358     | 0.000047 |
+| nativeHash            | 0.000045 | 0.000054     | 0.000038 |
+| faster                | 0.992943 | 0.984737     | 0.000044 |
+| vhFaster              | 0.992943 | 0.984737     | 0.000044 |
 
 Based on these data, the **faster** hash functions fail to touch the majority of hash-table cells even once.  
 This implies a severely skewed distribution and will lead to noticeable performance degradation in any hash-table implementation.
@@ -87,17 +87,17 @@ This implies a severely skewed distribution and will lead to noticeable performa
 
 The following table shows Index of Dispersion (IOD). Good hash functions will have their IOD close to 1.0. IOD greater than 1 signifies clustering of results. 
 
-| Hash                  | number      | mm         | uuid     |
-| --------------------- | ----------- | ---------- | -------- |
-| varHandle             | 0.990134    | 0.989610   | 0.990976 |
-| xxHash                | 0.989583    | 0.990266   | 0.989941 |
-| default               | 2.849634    | 2.899583   | 0.988512 |
-| metroHash             | 0.990048    | 0.989624   | 0.990162 |
-| unrolledDefault       | 2.849634    | 2.899583   | 0.988512 |
-| vectorizedDefaultHash | 2.535957    | 2.900980   | 0.990611 |
-| nativeHash            | 0.980283    | 1.010127   | 0.990428 |
-| faster                | 1539.050781 | 858.425110 | 0.990534 |
-| vhFaster              | 1539.050781 | 858.425110 | 0.990534 |
+| Hash                  | number      | fixed_prefix | uuid     |
+| --------------------- | ----------- |--------------| -------- |
+| varHandle             | 0.990134    | 0.989610     | 0.990976 |
+| xxHash                | 0.989583    | 0.990266     | 0.989941 |
+| default               | 2.849634    | 2.899583     | 0.988512 |
+| metroHash             | 0.990048    | 0.989624     | 0.990162 |
+| unrolledDefault       | 2.849634    | 2.899583     | 0.988512 |
+| vectorizedDefaultHash | 2.535957    | 2.900980     | 0.990611 |
+| nativeHash            | 0.980283    | 1.010127     | 0.990428 |
+| faster                | 1539.050781 | 858.425110   | 0.990534 |
+| vhFaster              | 1539.050781 | 858.425110   | 0.990534 |
 
 Once again, UUID keys produce good hash distribution no matter which function is used.  
 And once again, **faster** hashes show very significant clustering.  
@@ -109,8 +109,8 @@ The table below shows percentile distributions (p50, p75, p90, p99) of how many 
 This gives a direct view of hash distribution quality for our three key naming patterns.
 
 
-| Hash                  | number           | mm                | uuid             |
-| --------------------- | ---------------- | ----------------- | ---------------- |
+| Hash                  | number           | fixed_prefix      | uuid             |
+| --------------------- | ---------------- |-------------------| ---------------- |
 | varHandle             | {10, 14, 18, 21} | {10, 14, 18, 21}  | {10, 14, 18, 21} |
 | xxHash                | {10, 14, 18, 21} | {10, 14, 18, 21}  | {10, 14, 18, 21} |
 | default               | {9, 17, 25, 29}  | {9, 17, 25, 31}   | {10, 14, 18, 21} |
@@ -142,7 +142,7 @@ TODO: add description why slowest hash function gives better performance in hash
 
 ### Summary
 
-Given their poor key distribution on the "number" and "mm" key patterns, the `faster` and `vhFaster` hash functions can be dropped from further research.
+Given their poor key distribution on the "number" and "fixed_prefix" key patterns, the `faster` and `vhFaster` hash functions can be dropped from further research.
 
 In contrast, `xxHash`, `metroHash`, `varHandle`, and `nativeHash` show consistently solid distribution across all hash-table cells, regardless of key pattern. It makes sense to take a subset of these for deeper testing. For example, `xxHash` is widely used, while `nativeHash` is noticeably faster to compute.
 
@@ -202,35 +202,35 @@ Exact hardware details matter less here—we care mainly about relative performa
 
 #### xxHash
 
-| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
-|----------|------------------|---------------------|-------------------|
-| number   | 81.893  ± 1.679  | 70.930  ± 1.275     | 57.247  ± 0.729   |
-| mm       | 100.128 ± 2.560  | 88.850  ± 3.860     | 65.882  ± 2.515   |
-| uuid     | 144.904 ± 5.118  | 136.992 ± 0.601     | 104.501 ± 1.260   |
+| Key Type     | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|--------------|------------------|---------------------|-------------------|
+| number       | 81.893  ± 1.679  | 70.930  ± 1.275     | 57.247  ± 0.729   |
+| fixed_prefix | 100.128 ± 2.560  | 88.850  ± 3.860     | 65.882  ± 2.515   |
+| uuid         | 144.904 ± 5.118  | 136.992 ± 0.601     | 104.501 ± 1.260   |
 
 #### default
 
-| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
-|----------|------------------|---------------------|-------------------|
-| number   | 28.362  ± 0.537  | 55.265  ± 1.708     | 44.832  ± 0.513   |
-| mm       | 36.171  ± 0.262  | 78.265  ± 0.771     | 49.117  ± 0.141   |
-| uuid     | 156.116 ± 1.215  | 161.020 ± 6.575     | 112.858 ± 2.041   |
+| Key Type     | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|--------------|------------------|---------------------|-------------------|
+| number       | 28.362  ± 0.537  | 55.265  ± 1.708     | 44.832  ± 0.513   |
+| fixed_prefix | 36.171  ± 0.262  | 78.265  ± 0.771     | 49.117  ± 0.141   |
+| uuid         | 156.116 ± 1.215  | 161.020 ± 6.575     | 112.858 ± 2.041   |
 
 #### unrolledDefault
 
-| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
-|----------|------------------|---------------------|-------------------|
-| number   | 28.147  ± 1.180  | 55.430  ± 0.567     | 42.736  ± 0.171   |
-| mm       | 34.953  ± 0.194  | 74.320  ± 0.447     | 48.790  ± 2.885   |
-| uuid     | 142.156 ± 1.246  | 151.103 ± 3.590     | 107.175 ± 3.973   |
+| Key Type     | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|--------------|------------------|---------------------|-------------------|
+| number       | 28.147  ± 1.180  | 55.430  ± 0.567     | 42.736  ± 0.171   |
+| fixed_prefix | 34.953  ± 0.194  | 74.320  ± 0.447     | 48.790  ± 2.885   |
+| uuid         | 142.156 ± 1.246  | 151.103 ± 3.590     | 107.175 ± 3.973   |
 
 #### nativeHash
 
-| Key Type | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
-|----------|------------------|---------------------|-------------------|
-| number   | 73.518  ± 0.940  | 59.066  ± 0.831     | 49.031 ± 0.461    |
-| mm       | 88.947  ± 0.869  | 74.744  ± 1.138     | 56.419 ± 1.323    |
-| uuid     | 137.067 ± 5.240  | 134.238 ± 3.451     | 95.075 ± 1.147    |
+| Key Type     | chaining (ns/op) | linearprobe (ns/op) | robinhood (ns/op) |
+|--------------|------------------|---------------------|-------------------|
+| number       | 73.518  ± 0.940  | 59.066  ± 0.831     | 49.031 ± 0.461    |
+| fixed_prefix | 88.947  ± 0.869  | 74.744  ± 1.138     | 56.419 ± 1.323    |
+| uuid         | 137.067 ± 5.240  | 134.238 ± 3.451     | 95.075 ± 1.147    |
 
 ## Experiments with storing keys
 
@@ -244,7 +244,7 @@ Then 2 new versions of linear probe were implemented: nativeLinearprobe stores r
 | nativeLinearprobe | 102.774 ± 2.339       | 5.813 ± 0.542                        | 73.564 ± 1.229                 |
 | rawLinearprobe    | 89.855  ± 1.314       | 3.248 ± 0.099                        | 66.344 ± 5.871                 |
 
-### mm
+### fixed_prefix
 
 | Map Class         | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
 |-------------------|-----------------------|--------------------------------------|--------------------------------|
@@ -273,35 +273,35 @@ The data below demonstrates the results for hash map using `HashMap` from java.u
 
 ### xxHash
 
-| Key Type | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
-|----------|-----------------------|--------------------------------------|--------------------------------|
-| number   | 44.672 ± 1.030        | 2.145 ± 0.223                        | 62.759 ± 1.633                 |
-| mm       | 52.721 ± 2.620        | 2.236 ± 1.184                        | 75.227 ± 0.364                 |
-| uuid     | 107.706 ± 3.578       | 2.835 ± 1.009                        | 133.805 ± 1.497                |
+| Key Type     | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|--------------|-----------------------|--------------------------------------|--------------------------------|
+| number       | 44.672 ± 1.030        | 2.145 ± 0.223                        | 62.759 ± 1.633                 |
+| fixed_prefix | 52.721 ± 2.620        | 2.236 ± 1.184                        | 75.227 ± 0.364                 |
+| uuid         | 107.706 ± 3.578       | 2.835 ± 1.009                        | 133.805 ± 1.497                |
 
 ### default
 
-| Key Type | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
-|----------|-----------------------|--------------------------------------|--------------------------------|
-| number   | 44.295 ± 0.559        | 2.155 ± 0.391                        | 63.385 ± 15.463                |
-| mm       | 53.131 ± 0.637        | 2.223 ± 0.304                        | 75.288 ± 2.935                 |
-| uuid     | 106.847 ± 5.341       | 2.818 ± 0.712                        | 133.525 ± 7.395                |
+| Key Type     | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|--------------|-----------------------|--------------------------------------|--------------------------------|
+| number       | 44.295 ± 0.559        | 2.155 ± 0.391                        | 63.385 ± 15.463                |
+| fixed_prefix | 53.131 ± 0.637        | 2.223 ± 0.304                        | 75.288 ± 2.935                 |
+| uuid         | 106.847 ± 5.341       | 2.818 ± 0.712                        | 133.525 ± 7.395                |
 
 ### unrolledDefault
 
-| Key Type | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
-|----------|-----------------------|--------------------------------------|--------------------------------|
-| number   | 45.005 ± 1.166        | 2.137 ± 0.166                        | 62.798 ± 2.777                 |
-| mm       | 51.730 ± 0.676        | 2.224 ± 0.297                        | 75.048 ± 2.673                 |
-| uuid     | 106.087 ± 4.570       | 2.879 ± 1.444                        | 133.376 ± 3.952                |
+| Key Type     | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|--------------|-----------------------|--------------------------------------|--------------------------------|
+| number       | 45.005 ± 1.166        | 2.137 ± 0.166                        | 62.798 ± 2.777                 |
+| fixed_prefix | 51.730 ± 0.676        | 2.224 ± 0.297                        | 75.048 ± 2.673                 |
+| uuid         | 106.087 ± 4.570       | 2.879 ± 1.444                        | 133.376 ± 3.952                |
 
 ### NativeHash
 
-| Key Type | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
-|----------|-----------------------|--------------------------------------|--------------------------------|
-| number   | 44.107 ± 0.717        | 2.145 ± 0.523                        | 63.268 ± 15.478                |
-| mm       | 56.567 ± 2.430        | 2.336 ± 0.922                        | 75.370 ± 8.464                 |
-| uuid     | 108.970 ± 6.118       | 2.826 ± 0.567                        | 135.153 ± 45.876               |
+| Key Type     | Score (ns/op) ± Error | L1-dcache-load-misses (#/op) ± Error | L1-dcache-loads (#/op) ± Error |
+|--------------|-----------------------|--------------------------------------|--------------------------------|
+| number       | 44.107 ± 0.717        | 2.145 ± 0.523                        | 63.268 ± 15.478                |
+| fixed_prefix | 56.567 ± 2.430        | 2.336 ± 0.922                        | 75.370 ± 8.464                 |
+| uuid         | 108.970 ± 6.118       | 2.826 ± 0.567                        | 135.153 ± 45.876               |
 
 ### Allocations
 
@@ -312,11 +312,11 @@ benchmark:gc.alloc.rate            number    182.955 ±  6.418  MB/sec
 benchmark:gc.alloc.rate.norm       number      8.000 ±  0.001    B/op
 benchmark:gc.count                 number     21.000           counts
 benchmark:gc.time                  number    425.000               ms
-benchmark                              mm     45.773 ±  0.748   ns/op
-benchmark:gc.alloc.rate                mm    166.689 ±  2.712  MB/sec
-benchmark:gc.alloc.rate.norm           mm      8.000 ±  0.001    B/op
-benchmark:gc.count                     mm     18.000           counts
-benchmark:gc.time                      mm    329.000               ms
+benchmark                    fixed_prefix     45.773 ±  0.748   ns/op
+benchmark:gc.alloc.rate      fixed_prefix    166.689 ±  2.712  MB/sec
+benchmark:gc.alloc.rate.norm fixed_prefix      8.000 ±  0.001    B/op
+benchmark:gc.count           fixed_prefix     18.000           counts
+benchmark:gc.time            fixed_prefix    329.000               ms
 benchmark                            uuid     51.819 ±  0.883   ns/op
 benchmark:gc.alloc.rate              uuid    147.243 ±  2.499  MB/sec
 benchmark:gc.alloc.rate.norm         uuid      8.000 ±  0.001    B/op
@@ -340,7 +340,7 @@ The tables below demonstrate statistical leaderboards(top-5) for every hash func
 | 4    | Java's HashMap   | nativeHash      | 44.107 ± 0.717  |
 | 5    | Java's HashMap   | default         | 44.295 ± 0.559  |
 
-### MM
+### FixedPrefix
 
 | Rank | Implementation   | Parameter Set   | ns/op ± error   |
 |------|------------------|-----------------|-----------------|
@@ -365,6 +365,6 @@ The tables below demonstrate statistical leaderboards(top-5) for every hash func
 
 Different map key naming strategies call for different hash functions. 
 
-* For `Number` and `MM` naming strategies it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap.
+* For `Number` and `FixedPrefix` naming strategies it's recommended to use `unrolledDefault` hash function with `Chaining` hashmap.
 * For `UUID` and other key naming strategies it's recommended to use `nativeHash` hash function with `RobinHood` hashmap.
 

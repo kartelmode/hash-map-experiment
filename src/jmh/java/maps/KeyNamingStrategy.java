@@ -11,7 +11,7 @@ interface KeyNamingStrategy {
     static KeyNamingStrategy select (String keyNaming) {
         return switch (keyNaming) {
             case "number" -> new NumberKeyNamingStrategy();
-            case "mm" -> new MMNamingStrategy();
+            case "fixed_prefix" -> new FixedPrefixNamingStrategy();
             case "uuid" -> new UUIDNamingStrategy();
             default -> throw new IllegalArgumentException(keyNaming);
         };
@@ -26,7 +26,7 @@ final class NumberKeyNamingStrategy implements KeyNamingStrategy {
 
 }
 
-final class MMNamingStrategy implements KeyNamingStrategy {
+final class FixedPrefixNamingStrategy implements KeyNamingStrategy {
     private static final String PREFIX = "SOURCE13:";
     @Override
     public AsciiString formatKey(long sequence) {

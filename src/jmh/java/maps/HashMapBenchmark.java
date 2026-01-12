@@ -45,7 +45,7 @@ public class HashMapBenchmark {
     @Param({"chaining", "linearprobe", "robinhood", "nativeLinearprobe", "rawLinearprobe", "javaUtil"})
     private String mapClass = "javaUtil";
 
-    @Param({"number", "mm", "uuid"})
+    @Param({"number", "fixed_prefix", "uuid"})
     private String keyNaming = "number";
 
     private KeyNamingStrategy keyNamingStrategy;
@@ -165,4 +165,3 @@ public class HashMapBenchmark {
     }
 
 }
-
