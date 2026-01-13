@@ -319,37 +319,19 @@ From the info above we can see that Java's hashmap allocates data that is unacce
 
 ## Leaderboards
 
-The tables below demonstrate statistical leaderboards(top-5) for every hash function for every key naming strategy. 
+The tables below demonstrate statistical leaderboards(top-5) for every key naming strategy between combinations of hash-map implementations and hash functions. 
 
 ### Number
 
-| Rank | Implementation   | Parameter Set   | ns/op ± error   |
-|------|------------------|-----------------|-----------------|
-| 1    | Chaining         | unrolledDefault | 28.147 ± 1.180  |
-| 2    | Chaining         | default         | 28.362 ± 0.537  |
-| 3    | RobinHood        | unrolledDefault | 42.736 ± 0.171  |
-| 4    | Java's HashMap   | nativeHash      | 44.107 ± 0.717  |
-| 5    | Java's HashMap   | default         | 44.295 ± 0.559  |
+![alt text](JMH_Number_leaderboard.png "JMH benchmark results")
 
 ### FixedPrefix
 
-| Rank | Implementation   | Parameter Set   | ns/op ± error   |
-|------|------------------|-----------------|-----------------|
-| 1    | Chaining         | unrolledDefault | 34.953 ± 0.194  |
-| 2    | Chaining         | default         | 36.171 ± 0.262  |
-| 3    | RobinHood        | unrolledDefault | 48.790 ± 2.885  |
-| 4    | RobinHood        | default         | 49.117 ± 0.141  |
-| 5    | Java's HashMap   | unrolledDefault | 51.730 ± 0.676  |
+![alt text](JMH_FixedPrefix_leaderboard.png "JMH benchmark results")
 
 ### UUID
 
-| Rank | Implementation   | Parameter Set   | ns/op ± error    |
-|------|------------------|-----------------|------------------|
-| 1    | RobinHood        | nativeHash      | 95.075 ± 1.147   |
-| 2    | RobinHood        | xxHash          | 104.501 ± 1.260  |
-| 3    | Java's HashMap   | unrolledDefault | 106.087 ± 4.570  |
-| 4    | Java's HashMap   | default         | 106.847 ± 5.341  |
-| 5    | RobinHood        | unrolledDefault | 107.175 ± 3.973  |
+![alt text](JMH_UUID_leaderboard.png "JMH benchmark results")
 
 
 ## Conclusion
