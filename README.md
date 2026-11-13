@@ -127,7 +127,7 @@ Yet another confirmation that the `faster` hash functions have poor distribution
 
 The picture below shows computation cost of each hash function. The average length of strings is 16 in our internal projects. So cost is measured for such length.
 
-![alt text](JMH_hash_functions.png "JMH benchmark results")
+![alt text](charts/JMH_hash_functions.png "JMH benchmark results")
 
 TODO: add description why slowest hash function gives better performance in hashmap benchmark.  
 
@@ -323,15 +323,15 @@ The tables below demonstrate statistical leaderboards(top-5) for every key namin
 
 ### Number
 
-![alt text](JMH_Number_leaderboard.png "JMH benchmark results")
+![alt text](charts/JMH_Number_leaderboard.png "JMH benchmark results")
 
 ### FixedPrefix
 
-![alt text](JMH_FixedPrefix_leaderboard.png "JMH benchmark results")
+![alt text](charts/JMH_FixedPrefix_leaderboard.png "JMH benchmark results")
 
 ### UUID
 
-![alt text](JMH_UUID_leaderboard.png "JMH benchmark results")
+![alt text](charts/JMH_UUID_leaderboard.png "JMH benchmark results")
 
 
 ## Conclusion
