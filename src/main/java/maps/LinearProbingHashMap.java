@@ -24,6 +24,37 @@ public class LinearProbingHashMap implements Cache {
     }
 
     public LinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, float loadFactor) {
+        this(hashCodeComputer, defaultTableCapacity(activeDataCount, maxInactiveDataCount), maxInactiveDataCount, loadFactor);
+    }
+
+    /**
+     * @param tableCapacity exact number of slots (power of 2); the table is not doubled
+     * @param maxLoadFactor the table is resized when size reaches {@code tableCapacity * maxLoadFactor}
+     */
+    protected LinearProbingHashMap(HashCodeComputer hashCodeComputer, int tableCapacity, int maxInactiveDataCount, float maxLoadFactor) {
+        if (tableCapacity < MIN_CAPACITY || Integer.bitCount(tableCapacity) != 1) {
+            throw new IllegalArgumentException("tableCapacity must be a power of 2 and >= " + MIN_CAPACITY + ": " + tableCapacity);
+        }
+
+        if (maxLoadFactor <= 0 || maxLoadFactor > 100) {
+            throw new IllegalArgumentException("loadFactor must be between 0 and 100");
+        }
+
+        this.loadFactor = maxLoadFactor;
+
+        allocTable(tableCapacity);
+        inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
+        this.hashCodeComputer = hashCodeComputer;
+    }
+
+    /** A map with exactly {@code tableCapacity} slots, resized only when the load reaches {@code maxLoadFactor}. */
+    public static LinearProbingHashMap withTableCapacity(int tableCapacity, int maxInactiveDataCount,
+                                                         HashCodeComputer hashCodeComputer, float maxLoadFactor) {
+        return new LinearProbingHashMap(hashCodeComputer, tableCapacity, maxInactiveDataCount, maxLoadFactor);
+    }
+
+    /** Legacy sizing: twice the larger of the active and inactive counts. */
+    static int defaultTableCapacity(int activeDataCount, int maxInactiveDataCount) {
         if (activeDataCount < MIN_CAPACITY)
             activeDataCount = MIN_CAPACITY;
 
@@ -31,22 +62,7 @@ public class LinearProbingHashMap implements Cache {
             throw new IllegalArgumentException("activeDataCount must be a power of 2");
         }
 
-        if (loadFactor <= 0 || loadFactor > 100) {
-            throw new IllegalArgumentException("loadFactor must be between 0 and 100");
-        }
-
-        this.loadFactor = loadFactor;
-
-        int totalCacheSize;
-        if (maxInactiveDataCount < activeDataCount) {
-            totalCacheSize = activeDataCount * 2;
-        } else {
-            totalCacheSize = maxInactiveDataCount * 2;
-        }
-
-        allocTable(totalCacheSize);
-        inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
-        this.hashCodeComputer = hashCodeComputer;
+        return (maxInactiveDataCount < activeDataCount) ? activeDataCount * 2 : maxInactiveDataCount * 2;
     }
 
     protected void allocTable(int cap) {

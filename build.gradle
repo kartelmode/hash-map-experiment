@@ -60,6 +60,7 @@ String awsKey    = findProperty('awsKey') ?: System.properties['user.home'] + '/
 String awsUser   = 'ec2-user'
 String remoteDir = "/home/${awsUser}/jmh"
 String jmhArgs   = findProperty('jmhArgs')
+String jmhProf   = findProperty('jmhProf') ?: ''
 
 ssh.settings {
     knownHosts = allowAnyHosts
@@ -105,9 +106,14 @@ tasks.register('remoteJmh') {
                 // run JMH
                 def cmd = """
                     set -e
+                    source /etc/profile 2>/dev/null || true
+                    source ~/.bash_profile 2>/dev/null || true
                     pkill -9 java || true
                     cd ${remoteDir} && \
-                    java -jar bench.jar -rf json -rff results.json ${jmhArgs}
+                    java --add-modules=jdk.incubator.vector \
+                         --add-opens=java.base/java.lang=ALL-UNNAMED \
+                         --add-opens=java.base/java.nio=ALL-UNNAMED \
+                         -jar bench.jar ${jmhProf ? '-prof ' + jmhProf : ''} -rf json -rff results.json ${jmhArgs ?: ''}
                 """.stripIndent().trim()
                 execute cmd
 

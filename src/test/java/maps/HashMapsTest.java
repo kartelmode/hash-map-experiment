@@ -42,6 +42,8 @@ class HashMapsTest {
                         new LinearProbingHashMap(active, inactive, HASH_COMPUTER)),
                 new CacheFactory("RobinHoodHashMap", (active, inactive) ->
                         new RobinHoodHashMap(active, inactive, HASH_COMPUTER)),
+                new CacheFactory("StoredHashLinearProbingHashMap", (active, inactive) ->
+                        new StoredHashLinearProbingHashMap(active, inactive, HASH_COMPUTER)),
                 new CacheFactory("JavaHashMap", JavaHashMap::new)
         );
     }
@@ -216,6 +218,12 @@ class HashMapsTest {
     }
 
     @Test
+    @DisplayName("StoredHashLinearProbingHashMap: FIFO eviction order for inactive entries")
+    void fifoEviction_storedHashLinearProbing() {
+        testFifoEviction(new StoredHashLinearProbingHashMap(16, 4, HASH_COMPUTER));
+    }
+
+    @Test
     @DisplayName("JavaHashMap: FIFO eviction order for inactive entries")
     void fifoEviction_java() {
         testFifoEviction(new JavaHashMap(16, 4));
@@ -274,6 +282,12 @@ class HashMapsTest {
     @DisplayName("RobinHoodHashMap: FIFO with mixed active and deactivate flow")
     void fifoEviction_mixedFlow_robinHood() {
         testFifoMixedFlow(new RobinHoodHashMap(16, 4, HASH_COMPUTER));
+    }
+
+    @Test
+    @DisplayName("StoredHashLinearProbingHashMap: FIFO with mixed active and deactivate flow")
+    void fifoEviction_mixedFlow_storedHashLinearProbing() {
+        testFifoMixedFlow(new StoredHashLinearProbingHashMap(16, 4, HASH_COMPUTER));
     }
 
     @Test
@@ -345,6 +359,58 @@ class HashMapsTest {
     void fuzzyTest_robinHood(int maxInactiveDataCount, int totalEntries) {
         fuzzyTestImpl(new RobinHoodHashMap(16, maxInactiveDataCount, HASH_COMPUTER),
                 maxInactiveDataCount, totalEntries);
+    }
+
+    @ParameterizedTest(name = "fuzzyTest StoredHashLinearProbingHashMap [maxInactive={0}, totalEntries={1}]")
+    @CsvSource({
+            "1,200", "1,666",
+            "2,200", "2,666",
+            "4,200", "4,666",
+            "32,200", "32,666"
+    })
+    void fuzzyTest_storedHashLinearProbing(int maxInactiveDataCount, int totalEntries) {
+        fuzzyTestImpl(new StoredHashLinearProbingHashMap(16, maxInactiveDataCount, HASH_COMPUTER),
+                maxInactiveDataCount, totalEntries);
+    }
+
+    /** Degenerate hashes: long clusters, wrap-around at the table end, and a computed hash of 0 (the empty marker). */
+    static Stream<org.junit.jupiter.params.provider.Arguments> degenerateHashes() {
+        return Stream.of(
+                org.junit.jupiter.params.provider.Arguments.of("constant 15 (wraps around)", new FixedHashCodeComputer(15, 0)),
+                org.junit.jupiter.params.provider.Arguments.of("constant 0 (empty marker)", new FixedHashCodeComputer(0, 0)),
+                org.junit.jupiter.params.provider.Arguments.of("4 distinct values", new FixedHashCodeComputer(13, 3)));
+    }
+
+    @ParameterizedTest(name = "fuzzyTest StoredHashLinearProbingHashMap, hash {0} [maxInactive={2}]")
+    @MethodSource("degenerateHashesWithInactive")
+    void fuzzyTest_storedHashLinearProbing_degenerateHash(String name, HashCodeComputer hash, int maxInactiveDataCount) {
+        fuzzyTestImpl(new StoredHashLinearProbingHashMap(16, maxInactiveDataCount, hash), maxInactiveDataCount, 300);
+    }
+
+    static Stream<org.junit.jupiter.params.provider.Arguments> degenerateHashesWithInactive() {
+        return degenerateHashes().flatMap(a -> Stream.of(1, 4, 32).map(inactive ->
+                org.junit.jupiter.params.provider.Arguments.of(a.get()[0], a.get()[1], inactive)));
+    }
+
+    /** Hash = base + (first byte & spreadMask): a constant when spreadMask is 0. */
+    private static final class FixedHashCodeComputer extends HashCodeComputer {
+        private final int base;
+        private final int spreadMask;
+
+        FixedHashCodeComputer(int base, int spreadMask) {
+            this.base = base;
+            this.spreadMask = spreadMask;
+        }
+
+        @Override
+        protected int hashCode(byte[] array, sun.misc.Unsafe unsafeAccess, long address, int offset, int length) {
+            return base + (length == 0 ? 0 : (array[offset + length - 1] & spreadMask));
+        }
+
+        @Override
+        public String toString() {
+            return "Fixed(" + base + ", " + spreadMask + ")";
+        }
     }
 
     @ParameterizedTest(name = "fuzzyTest JavaHashMap [maxInactive={0}, totalEntries={1}]")

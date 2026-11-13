@@ -109,6 +109,12 @@ public final class AsciiString {
         return this;
     }
 
+    /** Flyweight-style reset: replaces the content with {@code len} bytes of {@code bytes} starting at {@code offset}. */
+    public AsciiString set(final byte[] bytes, final int offset, final int len) {
+        length = 0;
+        return append(bytes, offset, len);
+    }
+
     public AsciiString append(final CharSequence value) {
         final int len = value.length();
         ensureCapacity(length + len);

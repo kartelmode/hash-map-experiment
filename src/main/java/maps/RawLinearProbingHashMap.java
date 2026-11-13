@@ -34,11 +34,24 @@ public class RawLinearProbingHashMap implements Cache {
     }
 
     public RawLinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor, int maxKeyLength) {
-        if (activeDataCount < MIN_CAPACITY)
-            activeDataCount = MIN_CAPACITY;
+        this(hashCodeComputer, LinearProbingHashMap.defaultTableCapacity(activeDataCount, maxInactiveDataCount),
+                maxInactiveDataCount, loadFactor, maxKeyLength);
+    }
 
-        if (Integer.bitCount(activeDataCount) != 1) {
-            throw new IllegalArgumentException("activeDataCount must be a power of 2");
+    /** A map with exactly {@code tableCapacity} slots, resized only when the load reaches {@code maxLoadFactorPercent}%. */
+    public static RawLinearProbingHashMap withTableCapacity(int tableCapacity, int maxInactiveDataCount,
+                                                            HashCodeComputer hashCodeComputer, int maxLoadFactorPercent) {
+        return new RawLinearProbingHashMap(hashCodeComputer, tableCapacity, maxInactiveDataCount, maxLoadFactorPercent,
+                DEFAULT_MAX_KEY_LENGTH);
+    }
+
+    /**
+     * @param tableCapacity exact number of slots (power of 2); the table is not doubled
+     * @param loadFactor the table is resized when size reaches {@code tableCapacity * loadFactor / 100}
+     */
+    protected RawLinearProbingHashMap(HashCodeComputer hashCodeComputer, int tableCapacity, int maxInactiveDataCount, int loadFactor, int maxKeyLength) {
+        if (tableCapacity < MIN_CAPACITY || Integer.bitCount(tableCapacity) != 1) {
+            throw new IllegalArgumentException("tableCapacity must be a power of 2 and >= " + MIN_CAPACITY + ": " + tableCapacity);
         }
 
         if (Integer.bitCount(maxKeyLength) != 1) {
@@ -56,14 +69,7 @@ public class RawLinearProbingHashMap implements Cache {
         this.loadFactor = loadFactor;
         this.maxKeyLength = maxKeyLength;
 
-        int totalCacheSize;
-        if (maxInactiveDataCount < activeDataCount) {
-            totalCacheSize = activeDataCount * 2;
-        } else {
-            totalCacheSize = maxInactiveDataCount * 2;
-        }
-
-        allocTable(totalCacheSize);
+        allocTable(tableCapacity);
         inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
         this.hashCodeComputer = hashCodeComputer;
     }

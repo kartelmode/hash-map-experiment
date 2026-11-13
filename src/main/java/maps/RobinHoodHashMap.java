@@ -11,8 +11,18 @@ public final class RobinHoodHashMap extends LinearProbingHashMap {
         super(activeDataCount, maxInactiveDataCount, hashCodeComputer);
     }
 
-    public RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
+    public RobinHoodHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, float loadFactor) {
         super(activeDataCount, maxInactiveDataCount, hashCodeComputer, loadFactor);
+    }
+
+    private RobinHoodHashMap(HashCodeComputer hashCodeComputer, int tableCapacity, int maxInactiveDataCount, float maxLoadFactor) {
+        super(hashCodeComputer, tableCapacity, maxInactiveDataCount, maxLoadFactor);
+    }
+
+    /** A map with exactly {@code tableCapacity} slots, resized only when the load reaches {@code maxLoadFactor}. */
+    public static RobinHoodHashMap withTableCapacity(int tableCapacity, int maxInactiveDataCount,
+                                                     HashCodeComputer hashCodeComputer, float maxLoadFactor) {
+        return new RobinHoodHashMap(hashCodeComputer, tableCapacity, maxInactiveDataCount, maxLoadFactor);
     }
 
     @Override

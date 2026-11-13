@@ -31,29 +31,34 @@ public class NativeLinearProbingHashMap implements Cache {
     }
 
     public NativeLinearProbingHashMap(int activeDataCount, int maxInactiveDataCount, HashCodeComputer hashCodeComputer, int loadFactor) {
-        if (activeDataCount < MIN_CAPACITY)
-            activeDataCount = MIN_CAPACITY;
+        this(hashCodeComputer, LinearProbingHashMap.defaultTableCapacity(activeDataCount, maxInactiveDataCount),
+                maxInactiveDataCount, loadFactor);
+    }
 
-        if (Integer.bitCount(activeDataCount) != 1) {
-            throw new IllegalArgumentException("activeDataCount must be a power of 2");
+    /**
+     * @param tableCapacity exact number of slots (power of 2); the table is not doubled
+     * @param maxLoadFactorPercent the table is resized when size reaches {@code tableCapacity * maxLoadFactorPercent / 100}
+     */
+    protected NativeLinearProbingHashMap(HashCodeComputer hashCodeComputer, int tableCapacity, int maxInactiveDataCount, int maxLoadFactorPercent) {
+        if (tableCapacity < MIN_CAPACITY || Integer.bitCount(tableCapacity) != 1) {
+            throw new IllegalArgumentException("tableCapacity must be a power of 2 and >= " + MIN_CAPACITY + ": " + tableCapacity);
         }
 
-        if (loadFactor <= 0 || loadFactor > 100) {
+        if (maxLoadFactorPercent <= 0 || maxLoadFactorPercent > 100) {
             throw new IllegalArgumentException("loadFactor must be between 0 and 100");
         }
 
-        this.loadFactor = loadFactor;
+        this.loadFactor = maxLoadFactorPercent;
 
-        int totalCacheSize;
-        if (maxInactiveDataCount < activeDataCount) {
-            totalCacheSize = activeDataCount * 2;
-        } else {
-            totalCacheSize = maxInactiveDataCount * 2;
-        }
-
-        allocTable(totalCacheSize);
+        allocTable(tableCapacity);
         inactiveDataQueue = new FixedSizeQueue<>(maxInactiveDataCount);
         this.hashCodeComputer = hashCodeComputer;
+    }
+
+    /** A map with exactly {@code tableCapacity} slots, resized only when the load reaches {@code maxLoadFactorPercent}%. */
+    public static NativeLinearProbingHashMap withTableCapacity(int tableCapacity, int maxInactiveDataCount,
+                                                               HashCodeComputer hashCodeComputer, int maxLoadFactorPercent) {
+        return new NativeLinearProbingHashMap(hashCodeComputer, tableCapacity, maxInactiveDataCount, maxLoadFactorPercent);
     }
 
     private boolean compareKeys(AsciiString key, int idx) {
